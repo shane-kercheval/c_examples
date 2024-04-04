@@ -19,6 +19,11 @@ docker_bash:
 ####
 # Project
 ####
+run:
+	cc ./examples/hello_world.c -o ./examples/hello_world.out
+	./examples/hello_world.out
+
+
 linting:
 	ruff check source/config
 
