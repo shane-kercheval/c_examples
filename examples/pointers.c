@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <assert.h>
 
 void swap(int *pa, int *pb){
@@ -31,6 +32,9 @@ int main(void) {
     printf("main: a = %d, b = %d\n", a, b);
     assert(a == 17);
     assert(b == 21);
+
+    bool x = true;
+    assert((a == 17) == x);
 
     return 0;
 }

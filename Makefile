@@ -20,12 +20,12 @@ docker_bash:
 # Project
 ####
 run:
-	cc ./examples/pointers.c -o ./examples/pointers.out
-	./examples/pointers.out
+	cc ./examples/types.c -o ./examples/types.out
+	./examples/types.out
 
 run_no_debug:  # turns off debug mode and assertion statements are not executed
-	cc -DNDEBUG ./examples/pointers.c -o ./examples/pointers.out
-	./examples/pointers.out
+	cc -DNDEBUG ./examples/types.c -o ./examples/types.out
+	./examples/types.out
 
 
 linting:
