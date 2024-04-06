@@ -17,6 +17,13 @@ int main() {
     a = 'A';
     printf("The value of a is: int=%d char='%c'\n", a, a);
 
+    typedef unsigned char byte;
+    byte b = -1;
+    a = -1;
+    assert(a == b);
+    printf("The size of b is: %lu byte(s)\n", sizeof(b));
+    printf("The value of b is: int=%d char='%c'\n", b, b);
+
     enum day: unsigned char {sun, mon, tue, wed, thu, fri, sat};
     enum day today = mon;
     printf("Value of today: %d\n", today);
@@ -37,11 +44,14 @@ int main() {
     days[100] = sun; // days[7] is out of bounds, but the program will not crash
     printf("Size of days: %lu byte(s)\n", sizeof(days));
 
-    enum day2 {sun2, mon2, tue2, wed2, thu2, fri2, sat2};
-    enum day2 today2 = tue2;
+    // enum day2 {sun2, mon2, tue2, wed2, thu2, fri2, sat2};
+    typedef enum {sun2, mon2, tue2, wed2, thu2, fri2, sat2} day2;
+    // enum day2 today2 = tue2;
+    day2 today2 = tue2;
     printf("Value of today2: %d\n", today2);
     printf("Size of today2: %lu byte(s)\n", sizeof(today2));
-    enum day2 days2[7] = {sun2, mon2, tue2, wed2, thu2, fri2, sat2};
+    // enum day2 days2[7] = {sun2, mon2, tue2, wed2, thu2, fri2, sat2};
+    day2 days2[7] = {sun2, mon2, tue2, wed2, thu2, fri2, sat2};
     printf("Size of days: %lu byte(s)\n", sizeof(days2));
 
 
