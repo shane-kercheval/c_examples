@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <limits.h>
+
 
 int main() {
     printf("Size of unsigned int: %d bytes\n", (int) sizeof(unsigned int));
@@ -55,6 +57,13 @@ int main() {
     printf("Size of days: %lu byte(s)\n", sizeof(days2));
 
 
+    // limit of signed char
+    printf("The min value of signed char: %d\n", SCHAR_MIN);
+    printf("The max value of signed char: %d\n", SCHAR_MAX);
+    // this produces a warning when compiling but successfully compiles and runs
+    signed char c = SCHAR_MIN - 1;
+    printf("The value of c is: %d\n", c);
+    assert(c == SCHAR_MAX);
 
     return 0;
 }
