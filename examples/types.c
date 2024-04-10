@@ -26,11 +26,21 @@ int main() {
     printf("The size of b is: %lu byte(s)\n", sizeof(b));
     printf("The value of b is: int=%d char='%c'\n", b, b);
 
-    enum day: unsigned char {sun, mon, tue, wed, thu, fri, sat};
-    enum day today = mon;
+
+    typedef enum {
+        sun, mon, tue, wed, thu, fri, sat
+    } DayEnum;
+    // In this example, DayEnum is defined as a typical enum.
+    // Then, Day is defined as an unsigned char, allowing it to store the enum values (e.g. Day)
+    // while only using a single byte of memory.
+    // This approach offers a compromise: it utilizes enums for clearer code and explicitly controls memory usage by specifying the variable's type as unsigned char.
+    typedef unsigned char Day;  // via DayEnum
+    const Day day_values[] = {sun, mon, tue, wed, thu, fri, sat};
+
+    Day today = mon;
     printf("Value of today: %d\n", today);
     printf("Size of today: %lu byte(s)\n", sizeof(today));
-    enum day days[7];// = {sun, mon, tue, wed, thu, fri, sat};
+    Day days[7];// = {sun, mon, tue, wed, thu, fri, sat};
     days[0] = sun;
     assert(days[0] == *days);
     printf("Value of days[1]: %d\n", days[1]);
