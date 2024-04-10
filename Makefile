@@ -35,3 +35,7 @@ run_cpp_17:
 run_cpp_20:
 	g++ -std=c++20 -o c++_examples/output_cpp c++_examples/check_cpp_standard.cpp
 	./c++_examples/output_cpp
+
+run_ref:
+	g++ -std=c++20 -fmodules-ts -o c++_examples/output_cpp c++_examples/references.cpp
+	./c++_examples/output_cpp
