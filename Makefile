@@ -39,3 +39,13 @@ run_cpp_20:
 run_ref:
 	g++ -std=c++20 -fmodules-ts -o c++_examples/output_cpp c++_examples/references.cpp
 	./c++_examples/output_cpp
+
+run_classes:
+	g++ -std=c++20 -fmodules-ts -o c++_examples/output_cpp c++_examples/classes.cpp
+	./c++_examples/output_cpp
+
+run_modules:
+	g++ -std=c++20 -fmodules-ts -xc++-system-header iostream
+	g++ -std=c++20 -fmodules-ts -c c++_examples/modules.cpp -o modules.o
+	g++ -std=c++20 -fmodules-ts c++_examples/modules_user.cpp modules.o -o c++_examples/output_cpp 
+	./c++_examples/output_cpp
