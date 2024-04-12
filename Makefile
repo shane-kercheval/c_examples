@@ -49,3 +49,16 @@ run_modules:
 	g++ -std=c++20 -fmodules-ts -c c++_examples/modules.cpp -o modules.o
 	g++ -std=c++20 -fmodules-ts c++_examples/modules_user.cpp modules.o -o c++_examples/output_cpp 
 	./c++_examples/output_cpp
+
+run_vector:
+	# g++ \
+	# 	-Ic++_examples/vector \
+	# 	-o c++_examples/vector_user \
+	# 	c++_examples/vector/vector.cpp \
+		# c++_examples/vector_user.cpp
+	g++ \
+		-std=c++20 \
+		-Ic++_examples/vector \
+		-o c++_examples/output_cpp \
+		c++_examples/vector/vector.cpp c++_examples/vector_user.cpp
+	./c++_examples/output_cpp

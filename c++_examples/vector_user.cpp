@@ -12,5 +12,8 @@ int main() {
     v2[0] = 1.0;
     bool equal = v1 == v2;
     printf("v1 == v2: %s\n", equal ? "true" : "false");
+    v2[1] = 2.0;
+    equal = v1 == v2;
+    printf("v1 == v2: %s\n", equal ? "true" : "false");
     return 0;
 }
