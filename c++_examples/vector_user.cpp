@@ -1,10 +1,7 @@
-import hello; // Importing the hello module
-import <iostream>; // Importing the C standard input/output library
-// #include "hello";
-// #include <iostream>
+#include "vector/vector.h"
+#include <iostream>
 
 int main() {
-    say_hello(); // Calling function from the hello module
     Vector v1(5);
     v1[0] = 1.0;
 
