@@ -9,8 +9,9 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 set(CMAKE_C_EXTENSIONS FALSE)
 
-# Add the source directory
+enable_testing()
 add_subdirectory(src)
+add_subdirectory(tests)
 
 # Specify the executable target
 add_executable(producer_consumer src/main.c)
