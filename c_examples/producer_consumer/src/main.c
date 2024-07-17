@@ -1,15 +1,15 @@
 #include <stdio.h>
 #include <unistd.h>
 // #include <stdlib.h>
-// #include <stdbool.h>
+#include <stdbool.h>
 #include <assert.h>
 #include "utils.h"
 
 // NDEBUG is defined in Release mode
 #ifdef NDEBUG
-    int NDEBUG_DEFINED = 1;
+    bool NDEBUG_DEFINED = true;
 #else
-    int NDEBUG_DEFINED = 0;
+    bool NDEBUG_DEFINED = false;
 #endif
 
 
@@ -73,8 +73,7 @@ int main(int argc, char *argv[]) {
     // for (int i = 0; i < argc; i++) {
     //     printf("Arg %d: %s\n", i, argv[i]);
     // }
-    printf("NDEBUG DEFINED: %d\n", NDEBUG_DEFINED);
-    
+    printf("\n\nRelease Mode (NDEBUG DEFINED): %s\n\n", NDEBUG_DEFINED ? "true" : "false");
     printf("hello\n");
     struct timeval start, end;
     gettimeofday(&start, NULL);

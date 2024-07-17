@@ -1,6 +1,14 @@
-#include <assert.h>
 #include <sys/time.h>
+#include <stdio.h>
+#include <stdbool.h>
 #include "utils.h"
+
+void assert_true(bool condition) {
+    if (!condition) {
+        printf("Test failed\n");
+        exit(1);
+    }
+}
 
 void test_duration() {
     struct timeval start, end;
@@ -12,18 +20,18 @@ void test_duration() {
     end.tv_sec = 1;
     end.tv_usec = 0;
     result = duration(start, end);
-    assert(result == 0);
+    assert_true(result == 0);
 
     // half a second later
     end.tv_sec = 1;
     end.tv_usec = 500000;
     result = duration(start, end);
-    assert(result == 500000);
+    assert_true(result == 500000);
 }
 
 void test_malloc_or_die() {
     void *ptr = malloc_or_die(10);
-    assert(ptr != NULL);
+    assert_true(ptr != NULL);
     free(ptr);
 }
 

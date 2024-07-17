@@ -1,7 +1,9 @@
-# by default the build type is Release
-# in order to run the executable with the debug build type, run `make run BUILD_TYPE=Debug`
+# by default the build type is Debug
+# in order to run the executable with the Release build type, run `make run BUILD_TYPE=Release`
 # see CMakeLists.txt for exact compiler flags for each build type
-BUILD_TYPE ?= Release
+# For example, assert statements (e.g. used in utils.c for locking macros) are only enabled in Debug
+# build type, but are optimized out for Release build type
+BUILD_TYPE ?= Debug
 BUILD_DIR := build
 
 .PHONY: all debug release compile setup_build_dir clean tests run
@@ -12,7 +14,7 @@ debug: BUILD_TYPE := Debug
 debug: compile tests
 
 release: BUILD_TYPE := Release
-release: compile
+release: compile tests
 
 # Create the build directory and run cmake
 setup_build_dir:
@@ -23,9 +25,7 @@ setup_build_dir:
 compile: setup_build_dir
 	$(MAKE) -C $(BUILD_DIR)
 
-# Always run tests in Debug mode
-# this is needed so we don't optimize out the test code (e.g. assert statements)
-tests: BUILD_TYPE := Debug
+# Run tests
 tests: compile
 	cd $(BUILD_DIR) && ctest --output-on-failure
 
