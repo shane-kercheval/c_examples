@@ -60,11 +60,33 @@ void test_full_buffer() {
     HttpRequest req2 = { .request_id = 2, .data = "Request 2" };
     HttpRequest req3 = { .request_id = 3, .data = "Request 3" };
 
+    // fill the buffer
     assert_true(put(buffer, req1) == true);
     assert_true(put(buffer, req2) == true);
-    assert_true(put(buffer, req3) == false);  // Buffer is full
-
+    // buffer is full
+    assert_true(put(buffer, req3) == false);
     assert_true(buffer->count == 2);
+    // try again
+    assert_true(put(buffer, req3) == false);
+    assert_true(buffer->count == 2);
+
+    // empty the buffer
+    HttpRequest retrieved = get(buffer);
+    assert_true(retrieved.request_id == 1);
+    assert_true(strcmp(retrieved.data, "Request 1") == 0);
+    assert_true(buffer->count == 1);
+    retrieved = get(buffer);
+    assert_true(retrieved.request_id == 2);
+    assert_true(strcmp(retrieved.data, "Request 2") == 0);
+    assert_true(buffer->count == 0);
+
+    // buffer is empty
+    retrieved = get(buffer);
+    assert_true(retrieved.request_id == -1);
+    // try again
+    retrieved = get(buffer);
+    assert_true(retrieved.request_id == -1);
+
     destroy_buffer(buffer);
 }
 
