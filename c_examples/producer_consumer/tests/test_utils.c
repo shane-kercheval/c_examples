@@ -21,7 +21,14 @@ void test_duration() {
     assert(result == 500000);
 }
 
+void test_malloc_or_die() {
+    void *ptr = malloc_or_die(10);
+    assert(ptr != NULL);
+    free(ptr);
+}
+
 int main() {
     test_duration();
+    test_malloc_or_die();
     return 0;
 }
