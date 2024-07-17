@@ -1,8 +1,13 @@
+# Arguments for producer_consumer executable
+NUM_PRODUCERS ?= 2
+NUM_CONSUMERS ?= 2
+BUFFER_SIZE ?= 10
+
 # by default the build type is Debug
-# in order to run the executable with the Release build type, run `make run BUILD_TYPE=Release`
+# in order to run the executable with the Release build type, run `make run BUILD_TYPE=`
 # see CMakeLists.txt for exact compiler flags for each build type
 # For example, assert statements (e.g. used in utils.c for locking macros) are only enabled in Debug
-# build type, but are optimized out for Release build type
+# build type but are optimized out for Release build type
 BUILD_TYPE ?= Debug
 BUILD_DIR := build
 
@@ -33,4 +38,4 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 run: compile
-	@$(BUILD_DIR)/producer_consumer || { echo 'Error running producer_consumer'; exit 1; }
+	@$(BUILD_DIR)/producer_consumer $(NUM_PRODUCERS) $(NUM_CONSUMERS) $(BUFFER_SIZE) || { echo 'Error running producer_consumer'; exit 1; }
