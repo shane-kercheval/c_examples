@@ -12,6 +12,10 @@ endfunction()
 add_test_executable(test_utils test_utils.c)
 target_link_libraries(test_utils PRIVATE utils)
 
+add_test_executable(test_buffer test_buffer.c)
+target_link_libraries(test_buffer PRIVATE buffer utils)
+
+
 # If you have more tests, add them here
 # For example, a test that doesn't need the utils library:
 # add_test_executable(test_no_deps test_no_deps.c)

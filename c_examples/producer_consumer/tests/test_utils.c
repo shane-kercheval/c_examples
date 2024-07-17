@@ -3,12 +3,17 @@
 #include <stdbool.h>
 #include "utils.h"
 
-void assert_true(bool condition) {
-    if (!condition) {
-        printf("Test failed\n");
-        exit(1);
-    }
-}
+// https://stackoverflow.com/questions/1067226/c-multi-line-macro-do-while0-vs-scope-block
+#define assert_true(condition) do { \
+    if (!(condition)) { \
+        fprintf( \
+            stderr, \
+            "Assertion failed: function %s, file %s, line %d.\n", \
+            __func__, __FILE__, __LINE__); \
+        exit(EXIT_FAILURE); \
+    } \
+} while (0)
+
 
 void test_duration() {
     struct timeval start, end;

@@ -18,7 +18,7 @@ add_subdirectory(src)
 add_subdirectory(tests)
 
 add_executable(producer_consumer src/main.c)
-target_link_libraries(producer_consumer PRIVATE utils)
+target_link_libraries(producer_consumer PRIVATE buffer utils)
 
 # Define NDEBUG for Release builds
 # NDEBUG is a macro that disables assertions in the code
