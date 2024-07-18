@@ -21,7 +21,6 @@
 #define COND_SIGNAL(cond) assert(pthread_cond_signal(cond) == 0);
 #define COND_WAIT(cond, mutex) assert(pthread_cond_wait(cond, mutex) == 0);
 
-
 /*
  * Calculate the duration between two timevals in microseconds.
  * For example:

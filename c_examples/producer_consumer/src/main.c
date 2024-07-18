@@ -17,7 +17,7 @@
 #endif
 
 int total_requests = 0;
-const int MAX_REQUESTS = 100;
+const int MAX_REQUESTS = 10000;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 // OSTEP: "producer threads wait on the condition `not_full`, and signals `not_empty`"
 // OSTEP: "consumer threads wait on the condition `not_empty`, and signals `not_full`"
@@ -31,8 +31,18 @@ pthread_cond_t not_empty = PTHREAD_COND_INITIALIZER;
 void* producer(void* arg) {
     Buffer* buffer = (Buffer*)arg;
     // generate fixed number of requests
-    while (total_requests < MAX_REQUESTS) {
+    // while (total_requests < MAX_REQUESTS) {   // this is causing deadlock because total_requests is not locked
+    while (true) {
         MUTEX_LOCK(&mutex);
+        if (total_requests >= MAX_REQUESTS) {
+            // this needs to run before we put the request in the buffer and increment the total_requests
+            // otherwise we will add something to the buffer and then exit the function before
+            // signaling the not_empty condition and unlocking
+            // I only have this break logic here to stop the program at a certain specified number of requests
+            COND_SIGNAL(&not_empty);
+            MUTEX_UNLOCK(&mutex);
+            break;
+        }
         while (buffer->count == buffer->size) {
             // When the count is equal to the size of the buffer, the buffer is full.
             // We are going to wait until the not_full condition is signaled.
@@ -47,7 +57,7 @@ void* producer(void* arg) {
         // Signal the not_empty condition to wake up any waiting consumers.
         COND_SIGNAL(&not_empty);
         MUTEX_UNLOCK(&mutex);
-        printf("Producer producing request %d: %s\n", request.request_id, request.data);
+        // printf("Producer producing request %d: %s\n", request.request_id, request.data);
     }
     return NULL;
 }
@@ -58,8 +68,14 @@ void* producer(void* arg) {
 */
 void* consumer(void* arg) {
     Buffer* buffer = (Buffer*)arg;
-    while (buffer->count != 0 || total_requests < MAX_REQUESTS) {
+    while (true) {
         MUTEX_LOCK(&mutex);
+        if (buffer->count == 0 && total_requests >= MAX_REQUESTS) {
+            // no need to signal the producer threads because they are finished
+            // I only have this break logic here to stop the program at a certain specified number of requests
+            MUTEX_UNLOCK(&mutex);
+            break;
+        }
         while (buffer->count == 0) {
             // When the count is 0, the buffer is empty.
             // We are going to wait until the not_empty condition is signaled.
@@ -71,7 +87,7 @@ void* consumer(void* arg) {
         COND_SIGNAL(&not_full);
         MUTEX_UNLOCK(&mutex);
         // Simulate request processing
-        printf("Consumer processing request %d: %s\n", request.request_id, request.data);
+        // printf("Consumer processing request %d: %s\n", request.request_id, request.data);
         // sleep(1);
     }
     return NULL;
@@ -91,6 +107,7 @@ int main(int argc, char* argv[]) {
     pthread_t* consumer_threads = (pthread_t*)malloc_or_die(num_consumers * sizeof(pthread_t));
     Buffer* buffer_ptr = create_buffer(buffer_size);
 
+    printf("Running producer-consumer simulation with %d producers, %d consumers, and buffer size %d\n", num_producers, num_consumers, buffer_size);
     struct timeval start, end;
     gettimeofday(&start, NULL);
 
@@ -109,11 +126,10 @@ int main(int argc, char* argv[]) {
 
     gettimeofday(&end, NULL);
     long elapsed = duration(start, end);
-    printf("Elapsed time: %ld microseconds\n", elapsed);
-
     printf("num_producers: %d\n", num_producers);
     printf("num_consumers: %d\n", num_consumers);
     printf("buffer_size: %d\n", buffer_size);
+    printf("Elapsed time: %ld microseconds\n", elapsed);
     printf("\nRunning in %s\n\n", NDEBUG_DEFINED ? "Release (NDEBUG defined; e.g. assertion statements removed)" : "Debug (NDEBUG not defined; e.g. assertion statements included)");
     
     free(producer_threads);
