@@ -9,19 +9,33 @@
 
 /*
  * Wrapper around functions that need to check for NULL.
- * `assert` statements will be removed if NDEBUG is defined (i.e. built in Release mode).
+ * If NDEBUG (No Debug) is defined (i.e. built in Release mode), assertion statements will be
+ * removed, which also removes the expression being evaluated. In Release we still need to execute
+ * the functions, but without the overhead of the assert statements.
  */
-#define PTHREAD_CREATE(thread, start_routine, arg) assert(pthread_create(thread, NULL, start_routine, arg) == 0);
-#define PTHREAD_JOIN(thread) assert(pthread_join(thread, NULL) == 0);
+#ifdef NDEBUG
+    #define PTHREAD_CREATE(thread, start_routine, arg) pthread_create(thread, NULL, start_routine, arg)
+    #define PTHREAD_JOIN(thread) pthread_join(thread, NULL)
 
-#define MUTEX_LOCK(mutex) assert(pthread_mutex_lock(mutex) == 0);
-#define MUTEX_UNLOCK(mutex) assert(pthread_mutex_unlock(mutex) == 0);
-#define MUTEX_DESTROY(mutex) assert(pthread_mutex_destroy(mutex) == 0);
+    #define MUTEX_LOCK(mutex) pthread_mutex_lock(mutex)
+    #define MUTEX_UNLOCK(mutex) pthread_mutex_unlock(mutex)
+    #define MUTEX_DESTROY(mutex) pthread_mutex_destroy(mutex)
 
-// from man page: The pthread_cond_signal() function unblocks **one** thread waiting for the condition variable cond.
-#define COND_SIGNAL(cond) assert(pthread_cond_signal(cond) == 0);
-#define COND_BROADCAST(cond) assert(pthread_cond_broadcast(cond) == 0);
-#define COND_WAIT(cond, mutex) assert(pthread_cond_wait(cond, mutex) == 0);
+    #define COND_SIGNAL(cond) pthread_cond_signal(cond)
+    #define COND_BROADCAST(cond) pthread_cond_broadcast(cond)
+    #define COND_WAIT(cond, mutex) pthread_cond_wait(cond, mutex)
+#else
+    #define PTHREAD_CREATE(thread, start_routine, arg) assert(pthread_create(thread, NULL, start_routine, arg) == 0)
+    #define PTHREAD_JOIN(thread) assert(pthread_join(thread, NULL) == 0)
+
+    #define MUTEX_LOCK(mutex) assert(pthread_mutex_lock(mutex) == 0)
+    #define MUTEX_UNLOCK(mutex) assert(pthread_mutex_unlock(mutex) == 0)
+    #define MUTEX_DESTROY(mutex) assert(pthread_mutex_destroy(mutex) == 0)
+
+    #define COND_SIGNAL(cond) assert(pthread_cond_signal(cond) == 0)
+    #define COND_BROADCAST(cond) assert(pthread_cond_broadcast(cond) == 0)
+    #define COND_WAIT(cond, mutex) assert(pthread_cond_wait(cond, mutex) == 0)
+#endif
 
 /*
  * Calculate the duration between two timevals in microseconds.
