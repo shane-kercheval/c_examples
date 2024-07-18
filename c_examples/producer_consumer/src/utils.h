@@ -18,7 +18,9 @@
 #define MUTEX_UNLOCK(mutex) assert(pthread_mutex_unlock(mutex) == 0);
 #define MUTEX_DESTROY(mutex) assert(pthread_mutex_destroy(mutex) == 0);
 
+// from man page: The pthread_cond_signal() function unblocks **one** thread waiting for the condition variable cond.
 #define COND_SIGNAL(cond) assert(pthread_cond_signal(cond) == 0);
+#define COND_BROADCAST(cond) assert(pthread_cond_broadcast(cond) == 0);
 #define COND_WAIT(cond, mutex) assert(pthread_cond_wait(cond, mutex) == 0);
 
 /*

@@ -2,6 +2,7 @@
 NUM_PRODUCERS ?= 2
 NUM_CONSUMERS ?= 2
 BUFFER_SIZE ?= 10
+MAX_REQUESTS ?= 10000
 
 # by default the build type is Debug
 # in order to run the executable with the Release build type, run `make run BUILD_TYPE=Release`
@@ -38,14 +39,14 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 run: compile
-	@$(BUILD_DIR)/producer_consumer $(NUM_PRODUCERS) $(NUM_CONSUMERS) $(BUFFER_SIZE) || { echo 'Error running producer_consumer'; exit 1; }
+	@$(BUILD_DIR)/producer_consumer $(NUM_PRODUCERS) $(NUM_CONSUMERS) $(BUFFER_SIZE) $(MAX_REQUESTS) || { echo 'Error running producer_consumer'; exit 1; }
 
 # check for concurrency errors
 check_concurrency: BUILD_TYPE := Release
 check_concurrency: compile
-	valgrind --tool=helgrind -s $(BUILD_DIR)/producer_consumer $(NUM_PRODUCERS) $(NUM_CONSUMERS) $(BUFFER_SIZE)
+	valgrind --tool=helgrind -s $(BUILD_DIR)/producer_consumer $(NUM_PRODUCERS) $(NUM_CONSUMERS) $(BUFFER_SIZE) $(MAX_REQUESTS)
 
 # check for memory leaks
 check_memory: BUILD_TYPE := Release
 check_memory: compile
-	valgrind --leak-check=full --track-origins=yes -s $(BUILD_DIR)/producer_consumer $(NUM_PRODUCERS) $(NUM_CONSUMERS) $(BUFFER_SIZE)
+	valgrind --leak-check=full --track-origins=yes -s $(BUILD_DIR)/producer_consumer $(NUM_PRODUCERS) $(NUM_CONSUMERS) $(BUFFER_SIZE) $(MAX_REQUESTS)
