@@ -44,9 +44,11 @@ run: compile
 # check for concurrency errors
 check_concurrency: BUILD_TYPE := Release
 check_concurrency: compile
-	valgrind --tool=helgrind -s $(BUILD_DIR)/producer_consumer $(NUM_PRODUCERS) $(NUM_CONSUMERS) $(BUFFER_SIZE) $(MAX_REQUESTS)
+	#  1>/dev/null to suppress output from the executable
+	valgrind --tool=helgrind -s $(BUILD_DIR)/producer_consumer $(NUM_PRODUCERS) $(NUM_CONSUMERS) $(BUFFER_SIZE) $(MAX_REQUESTS) 1>/dev/null
 
 # check for memory leaks
 check_memory: BUILD_TYPE := Release
 check_memory: compile
-	valgrind --leak-check=full --track-origins=yes -s $(BUILD_DIR)/producer_consumer $(NUM_PRODUCERS) $(NUM_CONSUMERS) $(BUFFER_SIZE) $(MAX_REQUESTS)
+	#  1>/dev/null to suppress output from the executable
+	valgrind --leak-check=full --track-origins=yes -s $(BUILD_DIR)/producer_consumer $(NUM_PRODUCERS) $(NUM_CONSUMERS) $(BUFFER_SIZE) $(MAX_REQUESTS) 1>/dev/null
