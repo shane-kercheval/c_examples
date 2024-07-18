@@ -21,6 +21,7 @@ void test_create_destroy_buffer() {
     assert_true(buffer != NULL);
     assert_true(buffer->size == 10);
     assert_true(buffer->count == 0);
+    assert_true(buffer->total_puts == 0);
     assert_true(buffer->get_index == 0);
     assert_true(buffer->put_index == 0);
     destroy_buffer(buffer);
@@ -31,6 +32,7 @@ void test_put_get() {
     HttpRequest req = { .request_id = 1, .data = "Test Request" };
     assert_true(put(buffer, req) == true);
     assert_true(buffer->count == 1);
+    assert_true(buffer->total_puts == 1);
     assert_true(buffer->get_index == 0);
     assert_true(buffer->put_index == 1);
     assert_true(buffer->buffer[0].request_id == 1);
@@ -40,6 +42,7 @@ void test_put_get() {
     assert_true(retrieved.request_id == 1);
     assert_true(strcmp(retrieved.data, "Test Request") == 0);
     assert_true(buffer->count == 0);
+    assert_true(buffer->total_puts == 1);
     assert_true(buffer->get_index == 1);
     assert_true(buffer->put_index == 1);
 
@@ -63,12 +66,16 @@ void test_full_buffer() {
     // fill the buffer
     assert_true(put(buffer, req1) == true);
     assert_true(put(buffer, req2) == true);
+    assert_true(buffer->count == 2);
+    assert_true(buffer->total_puts == 2);
     // buffer is full
     assert_true(put(buffer, req3) == false);
     assert_true(buffer->count == 2);
+    assert_true(buffer->total_puts == 2);
     // try again
     assert_true(put(buffer, req3) == false);
     assert_true(buffer->count == 2);
+    assert_true(buffer->total_puts == 2);
 
     // empty the buffer
     HttpRequest retrieved = get(buffer);
@@ -79,6 +86,7 @@ void test_full_buffer() {
     assert_true(retrieved.request_id == 2);
     assert_true(strcmp(retrieved.data, "Request 2") == 0);
     assert_true(buffer->count == 0);
+    assert_true(buffer->total_puts == 2);
 
     // buffer is empty
     retrieved = get(buffer);
@@ -86,6 +94,7 @@ void test_full_buffer() {
     // try again
     retrieved = get(buffer);
     assert_true(retrieved.request_id == -1);
+    assert_true(buffer->count == 0);
 
     destroy_buffer(buffer);
 }

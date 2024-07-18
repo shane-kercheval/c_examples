@@ -34,6 +34,7 @@ typedef struct {
     int get_index;
     int put_index;
     int count;
+    int total_puts;
 } Buffer;
 
 /**

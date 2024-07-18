@@ -11,6 +11,7 @@ Buffer *create_buffer(int size) {
     buffer->get_index = 0;
     buffer->put_index = 0;
     buffer->count = 0;
+    buffer->total_puts = 0;
     return buffer;
 }
 
@@ -38,5 +39,6 @@ bool put(Buffer *buffer, HttpRequest value) {
     // add to the index and then loop to 0 if we reach the end
     buffer->put_index = (buffer->put_index + 1) % buffer->size;
     buffer->count++;
+    buffer->total_puts++;
     return true;
 }

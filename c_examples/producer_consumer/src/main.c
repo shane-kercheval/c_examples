@@ -44,6 +44,12 @@ void* producer(void* arg) {
     // while (total_requests < max_requests) {   // this is causing deadlock because total_requests is not locked
     while (true) {
         MUTEX_LOCK(&mutex);
+        while (buffer->count == buffer->size) {
+            // When the count is equal to the size of the buffer, the buffer is full.
+            // We are going to wait until the not_full condition is signaled.
+            // We pass in mutex which will be unlocked while waiting and re-locked when signaled.
+            COND_WAIT(&not_full, &mutex);
+        }
         if (total_requests >= max_requests) {
             // this needs to run before we put the request in the buffer and increment the total_requests
             // otherwise we will add something to the buffer and then exit the function before
@@ -55,12 +61,6 @@ void* producer(void* arg) {
             MUTEX_UNLOCK(&mutex);
             printf("Producer %d finished\n", thread_id);
             break;
-        }
-        while (buffer->count == buffer->size) {
-            // When the count is equal to the size of the buffer, the buffer is full.
-            // We are going to wait until the not_full condition is signaled.
-            // We pass in mutex which will be unlocked while waiting and re-locked when signaled.
-            COND_WAIT(&not_full, &mutex);
         }
         HttpRequest request;
         request.request_id = total_requests;
@@ -89,18 +89,18 @@ void* consumer(void* arg) {
 
     while (true) {
         MUTEX_LOCK(&mutex);
+        while (buffer->count == 0 && total_requests < max_requests) {
+            // When the count is 0, the buffer is empty.
+            // We are going to wait until the not_empty condition is signaled.
+            // We pass in mutex which will be unlocked while waiting and re-locked when signaled.
+            COND_WAIT(&not_empty, &mutex);
+        }
         if (buffer->count == 0 && total_requests >= max_requests) {
             // no need to signal the producer threads because they are finished
             // I only have this break logic here to stop the program at a certain specified number of requests
             MUTEX_UNLOCK(&mutex);
             printf("Consumer %d finished\n", thread_id);
             break;
-        }
-        while (buffer->count == 0 && total_requests < max_requests) {
-            // When the count is 0, the buffer is empty.
-            // We are going to wait until the not_empty condition is signaled.
-            // We pass in mutex which will be unlocked while waiting and re-locked when signaled.
-            COND_WAIT(&not_empty, &mutex);
         }
         HttpRequest request = get(buffer);
         // Signal the not_full condition to wake up any waiting producers.
@@ -135,7 +135,7 @@ int main(int argc, char* argv[]) {
     struct timeval start, end;
     gettimeofday(&start, NULL);
     for (int i = 0; i < num_producers; i++) {
-        args_ptrs[i] = (ThreadArgs*)malloc_or_die(sizeof(ThreadArgs));;
+        args_ptrs[i] = (ThreadArgs*)malloc_or_die(sizeof(ThreadArgs));
         args_ptrs[i]->thread_id = i;
         args_ptrs[i]->max_requests = max_requests;
         args_ptrs[i]->buffer = buffer_ptr;
@@ -143,12 +143,12 @@ int main(int argc, char* argv[]) {
         PTHREAD_CREATE(&producer_threads[i], producer, (void*)args_ptrs[i]);
     }
     for (int i = 0; i < num_consumers; i++) {
-        args_ptrs[num_producers + i] = (ThreadArgs*)malloc_or_die(sizeof(ThreadArgs));;
-        args_ptrs[i]->thread_id = i;
-        args_ptrs[i]->max_requests = max_requests;
-        args_ptrs[i]->buffer = buffer_ptr;
-        printf("Creating producer %d\n", i);
-        PTHREAD_CREATE(&consumer_threads[i], consumer, (void*)args_ptrs[i]);
+        args_ptrs[num_producers + i] = (ThreadArgs*)malloc_or_die(sizeof(ThreadArgs));
+        args_ptrs[num_producers + i]->thread_id = i;
+        args_ptrs[num_producers + i]->max_requests = max_requests;
+        args_ptrs[num_producers + i]->buffer = buffer_ptr;
+        printf("Creating consumer %d\n", i);
+        PTHREAD_CREATE(&consumer_threads[i], consumer, (void*)args_ptrs[num_producers + i]);
     }
     for (int i = 0; i < num_producers; i++) {
         PTHREAD_JOIN(producer_threads[i]);
@@ -164,9 +164,9 @@ int main(int argc, char* argv[]) {
     printf("num_consumers: %d\n", num_consumers);
     printf("buffer_size: %d\n", buffer_size);
     printf("max_requests: %d\n", max_requests);
-    printf("Final Requests Generated: %d\n", total_requests);
-    if (total_requests != max_requests) {
-        fprintf(stderr, "\n**Error**: total_requests != max_requests\n\n");
+    printf("Final Requests Generated: %d\n", buffer_ptr->total_puts);
+    if (buffer_ptr->total_puts != max_requests) {
+        fprintf(stderr, "\n**Error**: buffer_ptr->total_puts != max_requests\n\n");
     }
     printf("Final Buffer Count: %d\n", buffer_ptr->count);
     if (buffer_ptr->count != 0) {
