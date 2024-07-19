@@ -58,3 +58,4 @@ c++_examples/output_cpp
 /build
 /c_examples/producer_consumer/build
 .DS_Store
+/c_examples/client_server/build
