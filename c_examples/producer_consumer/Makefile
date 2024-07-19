@@ -56,4 +56,4 @@ check_memory: compile
 	#  1>/dev/null to suppress output from the executable
 	valgrind --leak-check=full --track-origins=yes -s $(BUILD_DIR)/producer_consumer $(NUM_PRODUCERS) $(NUM_CONSUMERS) $(BUFFER_SIZE) $(MAX_REQUESTS) 1>/dev/null
 
-checks: check_concurrency check_memory
+valhella: check_concurrency check_memory
