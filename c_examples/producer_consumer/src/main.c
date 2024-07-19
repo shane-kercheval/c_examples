@@ -35,7 +35,6 @@ int main(int argc, char* argv[]) {
     int max_requests = atoi(argv[4]);
 
     printf("\n---\nRunning producer-consumer simulation with %d producers, %d consumers, buffer size %d, max requests %d\n", num_producers, num_consumers, buffer_size, max_requests);
-
     SimulationResults results = simulate(num_producers, num_consumers, buffer_size, max_requests);
 
     printf("\n---\nRunning in %s\n\n", NDEBUG_DEFINED ? "Release (NDEBUG defined; e.g. assertion statements removed)" : "Debug (NDEBUG not defined; e.g. assertion statements included)");

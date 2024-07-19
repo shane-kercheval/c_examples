@@ -15,6 +15,9 @@ target_link_libraries(test_utils PRIVATE utils)
 add_test_executable(test_buffer test_buffer.c)
 target_link_libraries(test_buffer PRIVATE buffer utils)
 
+add_test_executable(test_simulation test_simulation.c)
+target_link_libraries(test_simulation PRIVATE simulation)
+
 
 # If you have more tests, add them here
 # For example, a test that doesn't need the utils library:
