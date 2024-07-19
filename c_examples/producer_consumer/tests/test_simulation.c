@@ -20,7 +20,7 @@ void test_simulation() {
     int num_consumers = 1;
     int buffer_size = 10;
     int max_requests = 1000;
-    SimulationResults results = simulate(num_producers, num_consumers, buffer_size, max_requests);
+    SimulationResults results = simulate(num_producers, num_consumers, buffer_size, max_requests, 0);
     assert_true(results.elapsed_time > 0);
     assert_true(results.total_puts == max_requests);
     assert_true(results.final_buffer_count == 0);
@@ -31,7 +31,7 @@ void test_simulation_multiple_producers_consumers() {
     int num_consumers = 5;
     int buffer_size = 10;
     int max_requests = 1000;
-    SimulationResults results = simulate(num_producers, num_consumers, buffer_size, max_requests);
+    SimulationResults results = simulate(num_producers, num_consumers, buffer_size, max_requests, 0);
     assert_true(results.elapsed_time > 0);
     assert_true(results.total_puts == max_requests);
     assert_true(results.final_buffer_count == 0);
@@ -42,7 +42,7 @@ void test_simulation_buffer_larger_than_requests() {
     int num_consumers = 2;
     int buffer_size = 1000;
     int max_requests = 100;
-    SimulationResults results = simulate(num_producers, num_consumers, buffer_size, max_requests);
+    SimulationResults results = simulate(num_producers, num_consumers, buffer_size, max_requests, 0);
     assert_true(results.elapsed_time > 0);
     assert_true(results.total_puts == max_requests);
     assert_true(results.final_buffer_count == 0);

@@ -19,6 +19,7 @@
 typedef struct {
     int thread_id;
     int max_requests;
+    int consumer_sleep;
     Buffer* buffer;
     pthread_mutex_t* mutex;
     pthread_cond_t* not_full;
@@ -33,6 +34,6 @@ typedef struct {
 
 void* producer(void* arg);
 void* consumer(void* arg);
-SimulationResults simulate(int num_producers, int num_consumers, int buffer_size, int max_requests);
+SimulationResults simulate(int num_producers, int num_consumers, int buffer_size, int max_requests, int consumer_sleep);
 
 #endif // SIMULATE_H

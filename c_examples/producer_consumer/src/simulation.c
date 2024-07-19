@@ -24,7 +24,7 @@ void* producer(void* arg) {
     int thread_id = args->thread_id;
     int max_requests = args->max_requests;
 
-    printf("|START| producer %d started\n", thread_id);
+    VERBOSE_PRINT("|START| producer %d started\n", thread_id);
     // generate fixed number of requests
     // while (buffer->total_puts < max_requests) {   // this is causing deadlock because buffer->total_puts is not locked
     bool put_success = false;
@@ -46,7 +46,7 @@ void* producer(void* arg) {
             // and if we only called COND_SIGNAL, only one consumer would wake up and the others would be stuck.
             COND_BROADCAST(not_empty);
             MUTEX_UNLOCK(mutex);
-            printf("|END| producer %d finished\n", thread_id);
+            VERBOSE_PRINT("|END| producer %d finished\n", thread_id);
             break;
         }
         HttpRequest request;
@@ -76,7 +76,8 @@ void* consumer(void* arg) {
     pthread_cond_t* not_empty = args->not_empty;
     int thread_id = args->thread_id;
     int max_requests = args->max_requests;
-    printf("|START| consumer %d started\n", thread_id);
+    int consumer_sleep = args->consumer_sleep;
+    VERBOSE_PRINT("|START| consumer %d started\n", thread_id);
 
     while (true) {
         MUTEX_LOCK(mutex);
@@ -91,7 +92,7 @@ void* consumer(void* arg) {
             // no need to signal the producer threads because they are finished
             // I only have this break logic here to stop the program at a certain specified number of requests
             MUTEX_UNLOCK(mutex);
-            printf("|END| consumer %d finished\n", thread_id);
+            VERBOSE_PRINT("|END| consumer %d finished\n", thread_id);
             break;
         }
         HttpRequest request = get(buffer);
@@ -102,7 +103,9 @@ void* consumer(void* arg) {
         VERBOSE_PRINT("--- %d consuming request %d\n", thread_id, request.request_id);
         // Simulate request processing
         // printf("Consumer processing request %d: %s\n", request.request_id, request.data);
-        // sleep(1);
+        if (consumer_sleep != 0){
+            sleep(consumer_sleep);
+        }
     }
     return NULL;
 }
@@ -112,7 +115,12 @@ void* consumer(void* arg) {
  * consumers share the same buffer, mutex, and condition variables, so we pass pointers to these
  * shared resources to each thread.
  */
-ThreadArgs** init_thread_args(int num_producers, int num_consumers, int buffer_size, int max_requests) {
+ThreadArgs** init_thread_args(
+        int num_producers,
+        int num_consumers,
+        int buffer_size,
+        int max_requests,
+        int consumer_sleep) {
     pthread_mutex_t* mutex = (pthread_mutex_t*)malloc_or_die(sizeof(pthread_mutex_t));
     MUTEX_INIT(mutex);
     // // OSTEP: "producer threads wait on the condition `not_full`, and signals `not_empty`"
@@ -143,6 +151,7 @@ ThreadArgs** init_thread_args(int num_producers, int num_consumers, int buffer_s
         args_ptrs[num_producers + i]->mutex = mutex;
         args_ptrs[num_producers + i]->not_full = not_full;
         args_ptrs[num_producers + i]->not_empty = not_empty;
+        args_ptrs[num_producers + i]->consumer_sleep = consumer_sleep;
     }
     return args_ptrs;
 }
@@ -161,8 +170,13 @@ void destroy_thread_args(ThreadArgs** args_ptrs, int num_ptrs) {
 }
 
 
-SimulationResults simulate(int num_producers, int num_consumers, int buffer_size, int max_requests) {
-    ThreadArgs** args_ptrs = init_thread_args(num_producers, num_consumers, buffer_size, max_requests);
+SimulationResults simulate(
+        int num_producers,
+        int num_consumers,
+        int buffer_size,
+        int max_requests,
+        int consumer_sleep) {
+    ThreadArgs** args_ptrs = init_thread_args(num_producers, num_consumers, buffer_size, max_requests, consumer_sleep);
     // I need to pass in pointers to the thread functions, so I need to allocate memory for each
     // thread's arguments and store the pointers in an array so I can free them later
     pthread_t* producer_threads = (pthread_t*)malloc_or_die(num_producers * sizeof(pthread_t));
@@ -172,11 +186,11 @@ SimulationResults simulate(int num_producers, int num_consumers, int buffer_size
     gettimeofday(&start, NULL);
     // launch threads
     for (int i = 0; i < num_producers; i++) {
-        printf("||CREATING|| producer %d\n", i);
+        VERBOSE_PRINT("||CREATING|| producer %d\n", i);
         PTHREAD_CREATE(&producer_threads[i], producer, (void*)args_ptrs[i]);
     }
     for (int i = 0; i < num_consumers; i++) {
-        printf("||CREATING|| consumer %d\n", i);
+        VERBOSE_PRINT("||CREATING|| consumer %d\n", i);
         PTHREAD_CREATE(&consumer_threads[i], consumer, (void*)args_ptrs[num_producers + i]);
     }
     for (int i = 0; i < num_producers; i++) {
