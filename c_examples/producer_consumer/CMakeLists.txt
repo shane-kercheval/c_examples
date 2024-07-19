@@ -18,7 +18,7 @@ add_subdirectory(src)
 add_subdirectory(tests)
 
 add_executable(producer_consumer src/main.c)
-target_link_libraries(producer_consumer PRIVATE buffer utils)
+target_link_libraries(producer_consumer PRIVATE buffer utils simulation)
 
 # Define NDEBUG for Release builds
 # NDEBUG is a macro that disables assertions in the code
@@ -34,5 +34,5 @@ target_compile_options(producer_consumer PRIVATE
 # if VERBOSE=1 is defined in the Makefile, define VERBOSE for the producer_consumer target
 # which will enable printf debugging messages
 if(DEFINED VERBOSE AND VERBOSE STREQUAL "1")
-  target_compile_definitions(producer_consumer PRIVATE VERBOSE=1)
+  target_compile_definitions(simulation PRIVATE VERBOSE=1)
 endif()

@@ -3,7 +3,6 @@
 #include <string.h>
 #include "buffer.h"
 
-
 Buffer *create_buffer(int size) {
     Buffer *buffer = (Buffer *)malloc_or_die(sizeof(Buffer));
     buffer->buffer = (HttpRequest *)malloc_or_die(size * sizeof(HttpRequest));

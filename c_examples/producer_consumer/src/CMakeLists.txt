@@ -1,3 +1,5 @@
 add_library(utils utils.c utils.h)
 add_library(buffer buffer.c buffer.h)
+add_library(simulation simulation.c simulation.h)
 target_link_libraries(buffer PRIVATE utils)
+target_link_libraries(simulation PRIVATE buffer utils)

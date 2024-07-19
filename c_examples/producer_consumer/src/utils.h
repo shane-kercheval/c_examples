@@ -19,8 +19,10 @@
 
     #define MUTEX_LOCK(mutex) pthread_mutex_lock(mutex)
     #define MUTEX_UNLOCK(mutex) pthread_mutex_unlock(mutex)
+    #define MUTEX_INIT(mutex) pthread_mutex_init(mutex, NULL)
     #define MUTEX_DESTROY(mutex) pthread_mutex_destroy(mutex)
 
+    #define COND_INIT(cond) pthread_cond_init(cond, NULL)
     #define COND_SIGNAL(cond) pthread_cond_signal(cond)
     #define COND_BROADCAST(cond) pthread_cond_broadcast(cond)
     #define COND_WAIT(cond, mutex) pthread_cond_wait(cond, mutex)
@@ -30,8 +32,10 @@
 
     #define MUTEX_LOCK(mutex) assert(pthread_mutex_lock(mutex) == 0)
     #define MUTEX_UNLOCK(mutex) assert(pthread_mutex_unlock(mutex) == 0)
+    #define MUTEX_INIT(mutex) assert(pthread_mutex_init(mutex, NULL) == 0)
     #define MUTEX_DESTROY(mutex) assert(pthread_mutex_destroy(mutex) == 0)
 
+    #define COND_INIT(cond) assert(pthread_cond_init(cond, NULL) == 0)
     #define COND_SIGNAL(cond) assert(pthread_cond_signal(cond) == 0)
     #define COND_BROADCAST(cond) assert(pthread_cond_broadcast(cond) == 0)
     #define COND_WAIT(cond, mutex) assert(pthread_cond_wait(cond, mutex) == 0)

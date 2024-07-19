@@ -33,7 +33,8 @@ setup_build_dir:
 compile: setup_build_dir
 	$(MAKE) -C $(BUILD_DIR)
 
-# Run tests
+# Run tests with VERBOSE off
+tests: VERBOSE := 0
 tests: compile
 	cd $(BUILD_DIR) && ctest --output-on-failure
 
