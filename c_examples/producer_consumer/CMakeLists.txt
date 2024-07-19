@@ -30,3 +30,9 @@ target_compile_options(producer_consumer PRIVATE
   $<$<CONFIG:Debug>:-O0 -g>  # disables optimization; enables debug symbols
   $<$<CONFIG:Release>:-O3>  # enables high-level optimizations
 )
+
+# if VERBOSE=1 is defined in the Makefile, define VERBOSE for the producer_consumer target
+# which will enable printf debugging messages
+if(DEFINED VERBOSE AND VERBOSE STREQUAL "1")
+  target_compile_definitions(producer_consumer PRIVATE VERBOSE=1)
+endif()

@@ -16,6 +16,13 @@
     bool NDEBUG_DEFINED = false;
 #endif
 
+#ifdef VERBOSE
+// https://gcc.gnu.org/onlinedocs/gcc-7.5.0/cpp/Variadic-Macros.html
+#define VERBOSE_PRINT(...) printf(__VA_ARGS__)
+#else
+#define VERBOSE_PRINT(...) /* nothing */
+#endif
+
 volatile int total_requests = 0; // need volatile to prevent compiler optimizations
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 // OSTEP: "producer threads wait on the condition `not_full`, and signals `not_empty`"
@@ -38,16 +45,17 @@ void* producer(void* arg) {
     Buffer* buffer = args->buffer;
     int thread_id = args->thread_id;
     int max_requests = args->max_requests;
-    printf("Producer %d started\n", thread_id);
-    fflush(stdout);
+    printf("|START| producer %d started\n", thread_id);
     // generate fixed number of requests
     // while (total_requests < max_requests) {   // this is causing deadlock because total_requests is not locked
+    bool put_success = false;
     while (true) {
         MUTEX_LOCK(&mutex);
         while (buffer->count == buffer->size) {
             // When the count is equal to the size of the buffer, the buffer is full.
             // We are going to wait until the not_full condition is signaled.
             // We pass in mutex which will be unlocked while waiting and re-locked when signaled.
+            VERBOSE_PRINT("... producer %d waiting\n", thread_id);
             COND_WAIT(&not_full, &mutex);
         }
         if (total_requests >= max_requests) {
@@ -59,18 +67,19 @@ void* producer(void* arg) {
             // and if we only called COND_SIGNAL, only one consumer would wake up and the others would be stuck.
             COND_BROADCAST(&not_empty);
             MUTEX_UNLOCK(&mutex);
-            printf("Producer %d finished\n", thread_id);
+            printf("|END| producer %d finished\n", thread_id);
             break;
         }
         HttpRequest request;
         request.request_id = total_requests;
         sprintf(request.data, "%d", total_requests);
-        put(buffer, request);
+        put_success = put(buffer, request);
+        assert(put_success);  // buffer should not be full
         total_requests++;
         // Signal the not_empty condition to wake up any waiting consumers.
         COND_SIGNAL(&not_empty);
         MUTEX_UNLOCK(&mutex);
-        // printf("Producer producing request %d: %s\n", request.request_id, request.data);
+        VERBOSE_PRINT("+++ %d put request %d (put_success: %d)\n", thread_id, request.request_id, put_success);
     }
     return NULL;
 }
@@ -84,8 +93,7 @@ void* consumer(void* arg) {
     Buffer* buffer = args->buffer;
     int thread_id = args->thread_id;
     int max_requests = args->max_requests;
-    printf("Consumer %d started\n", thread_id);
-    fflush(stdout);
+    printf("|START| consumer %d started\n", thread_id);
 
     while (true) {
         MUTEX_LOCK(&mutex);
@@ -93,19 +101,22 @@ void* consumer(void* arg) {
             // When the count is 0, the buffer is empty.
             // We are going to wait until the not_empty condition is signaled.
             // We pass in mutex which will be unlocked while waiting and re-locked when signaled.
+            VERBOSE_PRINT("... consumer %d waiting\n", thread_id);
             COND_WAIT(&not_empty, &mutex);
         }
         if (buffer->count == 0 && total_requests >= max_requests) {
             // no need to signal the producer threads because they are finished
             // I only have this break logic here to stop the program at a certain specified number of requests
             MUTEX_UNLOCK(&mutex);
-            printf("Consumer %d finished\n", thread_id);
+            printf("|END| consumer %d finished\n", thread_id);
             break;
         }
         HttpRequest request = get(buffer);
+        assert(request.request_id != -1);  // buffer should not be empty
         // Signal the not_full condition to wake up any waiting producers.
         COND_SIGNAL(&not_full);
         MUTEX_UNLOCK(&mutex);
+        VERBOSE_PRINT("--- %d consuming request %d\n", thread_id, request.request_id);
         // Simulate request processing
         // printf("Consumer processing request %d: %s\n", request.request_id, request.data);
         // sleep(1);
@@ -139,7 +150,7 @@ int main(int argc, char* argv[]) {
         args_ptrs[i]->thread_id = i;
         args_ptrs[i]->max_requests = max_requests;
         args_ptrs[i]->buffer = buffer_ptr;
-        printf("Creating producer %d\n", i);
+        printf("||CREATING|| producer %d\n", i);
         PTHREAD_CREATE(&producer_threads[i], producer, (void*)args_ptrs[i]);
     }
     for (int i = 0; i < num_consumers; i++) {
@@ -147,7 +158,7 @@ int main(int argc, char* argv[]) {
         args_ptrs[num_producers + i]->thread_id = i;
         args_ptrs[num_producers + i]->max_requests = max_requests;
         args_ptrs[num_producers + i]->buffer = buffer_ptr;
-        printf("Creating consumer %d\n", i);
+        printf("||CREATING|| consumer %d\n", i);
         PTHREAD_CREATE(&consumer_threads[i], consumer, (void*)args_ptrs[num_producers + i]);
     }
     for (int i = 0; i < num_producers; i++) {
