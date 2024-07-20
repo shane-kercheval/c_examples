@@ -5,3 +5,8 @@
 void server_function() {
     printf("Server function called.\n");
 }
+
+int main() {
+    server_function();
+    return 0;
+}

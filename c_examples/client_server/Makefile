@@ -28,7 +28,7 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 run_client: compile
-	@$(BUILD_DIR)/$(CLIENT_EXEC) || { echo 'Error running client'; exit 1; }
+	@$(BUILD_DIR)/src/$(CLIENT_EXEC) || { echo 'Error running client'; exit 1; }
 
 run_server: compile
-	@$(BUILD_DIR)/$(SERVER_EXEC) || { echo 'Error running server'; exit 1; }
+	@$(BUILD_DIR)/src/$(SERVER_EXEC) || { echo 'Error running server'; exit 1; }
