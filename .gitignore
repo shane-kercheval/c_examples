@@ -59,3 +59,5 @@ c++_examples/output_cpp
 /c_examples/producer_consumer/build
 .DS_Store
 /c_examples/client_server/build
+c_examples/client_server/src/temp.c
+c_examples/client_server/src/temp2.c

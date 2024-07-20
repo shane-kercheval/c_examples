@@ -1,0 +1,77 @@
+#include "protocol.h"
+#include <stdlib.h>
+#include <string.h>
+#include <arpa/inet.h>
+
+
+Message encode_message(const Header *header, const uint8_t *payload) {
+    // TODO: what is the max payload size? What happens if it is larger i.e. chunk index out of range?
+    Message message;
+    message.size = sizeof(Header) + header->payload_size;
+    // define a byte array of the size of the message
+    message.data = (uint8_t *)malloc(message.size);
+    // first byte is the message type
+    message.data[0] = header->message_type;
+    // second byte is the command
+    message.data[1] = header->command;
+    // next four bytes are the payload size
+    // transform the integer to network byte order (big-endian)
+    // we need to transform it because, unlike the other fields, the these are multi-byte integer fields
+    // (uint32_t *) provides us with a way to access 4 bytes of memory as a single 32-bit integer
+    // then we have to dereference in order to assign the value to the memory location
+    *(uint32_t *)(message.data + 2) = htonl(header->payload_size);
+    // next four bytes is the chunk index
+    *(uint32_t *)(message.data + 6) = htonl(header->chunk_index);
+    // we have used 10 bytes so far, so we copy the payload after that
+    if (header->payload_size > 0 && payload != NULL) {
+        memcpy(message.data + 10, payload, header->payload_size);
+    }
+    return message;
+}
+
+void decode_message(const uint8_t *data, uint32_t data_size, Response *response) {
+    if (data_size < sizeof(Header)) {
+        // TODO: what should we do if the data isn't large enough to contain the header?
+        response->payload = NULL;
+        return;
+    }
+    // first byte is the message type
+    response->header.message_type = data[0];
+    // second byte is the command
+    response->header.command = data[1];
+    // next four bytes are the payload size
+    // deconvert the integer from network byte order (big-endian) to host byte order
+    response->header.payload_size = ntohl(*(uint32_t *)(data + 2));
+    response->header.chunk_index = ntohl(*(uint32_t *)(data + 6));
+
+    if (response->header.payload_size > 0) {
+        if (data_size < (sizeof(Header) + response->header.payload_size)) {
+            // TODO: what does it mean and what should we do if the data isn't large enough to contain the payload?
+            response->payload = NULL;
+            return;
+        }
+        // create a byte array of the size of the payload and then copy the payload into it (starting at the 11th byte)
+        response->payload = (uint8_t *)malloc(response->header.payload_size);
+        memcpy(response->payload, data + 10, response->header.payload_size);
+    } else {
+        response->payload = NULL;
+    }
+}
+
+/**
+ * Frees the memory allocated for the encoded message.
+ * 
+ * @param message Pointer to the Message struct to free
+ */
+void free_message(Message *message) {
+    free(message->data);
+}
+
+/**
+ * Frees the memory allocated for the decoded response payload.
+ * 
+ * @param response Pointer to the Response struct to free
+ */
+void free_response(Response *response) {
+    free(response->payload);
+}
