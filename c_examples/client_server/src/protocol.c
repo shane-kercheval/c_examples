@@ -1,5 +1,6 @@
 #include "protocol.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <arpa/inet.h>
 
@@ -10,6 +11,11 @@ Message encode_message(const Header *header, const uint8_t *payload) {
     message.size = sizeof(Header) + header->payload_size;
     // define a byte array of the size of the message
     message.data = (uint8_t *)malloc(message.size);
+    if (message.data == NULL) {
+        fprintf(stderr, "Error: Memory allocation failed for message.data\n");
+        // TODO: not sure if this is the best way to handle this error
+        exit(EXIT_FAILURE);
+    }
     // first byte is the message type
     message.data[0] = header->message_type;
     // second byte is the command
@@ -31,9 +37,9 @@ Message encode_message(const Header *header, const uint8_t *payload) {
 
 void decode_message(const uint8_t *data, uint32_t data_size, Response *response) {
     if (data_size < sizeof(Header)) {
-        // TODO: what should we do if the data isn't large enough to contain the header?
-        response->payload = NULL;
-        return;
+        fprintf(stderr, "Error: Data size is too small to contain the header\n");
+        // TODO: not sure if this is the best way to handle this error
+        exit(EXIT_FAILURE);
     }
     // first byte is the message type
     response->header.message_type = data[0];
@@ -47,11 +53,15 @@ void decode_message(const uint8_t *data, uint32_t data_size, Response *response)
     if (response->header.payload_size > 0) {
         if (data_size < (sizeof(Header) + response->header.payload_size)) {
             // TODO: what does it mean and what should we do if the data isn't large enough to contain the payload?
-            response->payload = NULL;
-            return;
+            exit(EXIT_FAILURE);
         }
         // create a byte array of the size of the payload and then copy the payload into it (starting at the 11th byte)
         response->payload = (uint8_t *)malloc(response->header.payload_size);
+        if (response->payload == NULL) {
+            // TODO: not sure if this is the best way to handle this error
+            fprintf(stderr, "Error: Memory allocation failed for response.payload\n");
+            exit(EXIT_FAILURE);
+        }
         memcpy(response->payload, data + 10, response->header.payload_size);
     } else {
         response->payload = NULL;
@@ -64,7 +74,9 @@ void decode_message(const uint8_t *data, uint32_t data_size, Response *response)
  * @param message Pointer to the Message struct to free
  */
 void free_message(Message *message) {
-    free(message->data);
+    if (message->data != NULL) {
+        free(message->data);
+    }
 }
 
 /**
@@ -73,5 +85,7 @@ void free_message(Message *message) {
  * @param response Pointer to the Response struct to free
  */
 void free_response(Response *response) {
-    free(response->payload);
+    if (response->payload != NULL) {
+        free(response->payload);
+    }
 }
