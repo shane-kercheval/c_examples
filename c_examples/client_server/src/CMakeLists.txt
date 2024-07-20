@@ -1,5 +1,3 @@
-include_directories(include)
-
 add_executable(client client.c)
 add_executable(server server.c)
 # NOTE: A static library is a collection of object files that are linked into the executable at
