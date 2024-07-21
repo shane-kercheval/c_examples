@@ -24,6 +24,10 @@ compile: setup_build_dir
 tests: compile
 	cd $(BUILD_DIR) && ctest --output-on-failure
 
+tests_memory: BUILD_TYPE := Release
+tests_memory: compile
+	valgrind --leak-check=full --track-origins=yes $(BUILD_DIR)/tests/test_protocol
+
 clean:
 	rm -rf $(BUILD_DIR)
 
