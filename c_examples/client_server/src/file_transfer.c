@@ -1,3 +1,4 @@
+#include "utils.h"
 #include "protocol.h"
 #include "file_transfer.h"
 #include <stdio.h>
@@ -12,8 +13,13 @@
 
 int request_file_metadata(int socket, const char* file_name, Response* response) {
     uint32_t payload_size = strlen_null_term(file_name);
-    Header header = {MESSAGE_REQUEST, COMMAND_REQUEST_METADATA, payload_size, 0};
-    Message message;
+    Header header;
+    header.message_type = MESSAGE_REQUEST;
+    header.command = COMMAND_REQUEST_METADATA;
+    header.payload_size = payload_size;
+    header.chunk_index = 0;
+    header.status = STATUS_NOT_SET;
+    header.error_code = ERROR_NOT_SET;
 
     // convert string (filename) to raw bytes
     Message message;
@@ -35,8 +41,30 @@ int request_file_metadata(int socket, const char* file_name, Response* response)
     if (bytes_received <= 0) {
         return ERROR_RECEIVE_FAILED;
     }
-    status = parse_message(buffer, bytes_received, &response);
+    status = parse_message(buffer, bytes_received, response);
     return status;
+}
+
+int _send_error_response(int socket, uint8_t command, uint8_t error_code) {
+    char error_message[256];
+    snprintf(error_message, sizeof(error_message), "Error code: %d", error_code);
+    Header header;
+    header.message_type = MESSAGE_ERROR;
+    header.command = command;
+    header.payload_size = strlen_null_term(error_message);
+    header.chunk_index = 0;
+    header.status = STATUS_ERROR;
+    header.error_code = error_code;
+
+    Message message;
+    int status = create_message(&header, (const uint8_t*)error_message, &message);
+    if (status != STATUS_OK) {
+        destroy_message(&message); // free memory in case of error (we aren't sure if any was allocated)
+        return status;
+    }
+    send(socket, message.data, message.size, 0);
+    destroy_message(&message);
+    return error_code;
 }
 
 int send_file_metadata(int socket, const char* file_name) {
@@ -50,11 +78,13 @@ int send_file_metadata(int socket, const char* file_name) {
     // and some of the printed characters were discarded. 
     int status = snprintf(full_path, sizeof(full_path), "%s/%s", SERVER_FILE_PATH, file_name);
     if (status < 0 || status >= sizeof(full_path)) {
+        _send_error_response(socket, COMMAND_REQUEST_METADATA, ERROR_FILE_OPEN_FAILED);
         return ERROR_FILE_OPEN_FAILED;
     }
     // man page: The stat utility displays information about the file pointed to by file.
     struct stat file_stat;
     if (stat(full_path, &file_stat) == -1) {
+        _send_error_response(socket, COMMAND_REQUEST_METADATA, ERROR_FILE_NOT_FOUND);
         return ERROR_FILE_NOT_FOUND;
     }
 
@@ -63,13 +93,16 @@ int send_file_metadata(int socket, const char* file_name) {
     snprintf(metadata, sizeof(metadata), "Size: %ld", file_stat.st_size);
     Header header = {MESSAGE_RESPONSE, COMMAND_REQUEST_METADATA, strlen_null_term(metadata), 0};
     Message message;
-    int status = create_message(&header, (const uint8_t*)metadata, &message);
+    status = create_message(&header, (const uint8_t*)metadata, &message);
     if (status != STATUS_OK) {
+        destroy_message(&message); // free memory in case of error (we aren't sure if any was allocated)
+        _send_error_response(socket, COMMAND_REQUEST_METADATA, status);
         return status;
     }
     ssize_t bytes_sent = send(socket, message.data, message.size, 0);
     destroy_message(&message);
     if (bytes_sent <= 0) {
+        _send_error_response(socket, COMMAND_REQUEST_METADATA, ERROR_SEND_FAILED);
         return ERROR_SEND_FAILED;
     }
     return STATUS_OK;
