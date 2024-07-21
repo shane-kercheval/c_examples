@@ -49,7 +49,6 @@ void decode_message(const uint8_t *data, uint32_t data_size, Response *response)
     // deconvert the integer from network byte order (big-endian) to host byte order
     response->header.payload_size = ntohl(*(uint32_t *)(data + 2));
     response->header.chunk_index = ntohl(*(uint32_t *)(data + 6));
-
     if (response->header.payload_size > 0) {
         if (data_size < (sizeof(Header) + response->header.payload_size)) {
             // TODO: what does it mean and what should we do if the data isn't large enough to contain the payload?

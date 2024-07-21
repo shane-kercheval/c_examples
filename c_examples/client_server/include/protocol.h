@@ -34,6 +34,7 @@ typedef struct {
     // using unsigned integers because we won't have negative values
     // using 8-bit integers because we only need 1 byte for certain values
     // using 32-bit integers to ensure we use 32 bits across all platforms
+    // specifying 8/32 allows use to build a protocol that can be consistently encoded/decoded across platforms
     uint8_t message_type;
     uint8_t command;
     uint32_t payload_size;
