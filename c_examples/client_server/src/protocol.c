@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 
 
-Message encode_message(const Header *header, const uint8_t *payload) {
+Message create_message(const Header *header, const uint8_t *payload) {
     // TODO: what is the max payload size? What happens if it is larger i.e. chunk index out of range?
     Message message;
     message.size = sizeof(Header) + header->payload_size;
@@ -35,7 +35,7 @@ Message encode_message(const Header *header, const uint8_t *payload) {
     return message;
 }
 
-void decode_message(const uint8_t *data, uint32_t data_size, Response *response) {
+void parse_message(const uint8_t *data, uint32_t data_size, Response *response) {
     if (data_size < sizeof(Header)) {
         fprintf(stderr, "Error: Data size is too small to contain the header\n");
         // TODO: not sure if this is the best way to handle this error
@@ -68,7 +68,7 @@ void decode_message(const uint8_t *data, uint32_t data_size, Response *response)
 }
 
 /**
- * Frees the memory allocated for the encoded message.
+ * Frees the memory allocated for the message.
  * 
  * @param message Pointer to the Message struct to free
  */
@@ -79,7 +79,7 @@ void free_message(Message *message) {
 }
 
 /**
- * Frees the memory allocated for the decoded response payload.
+ * Frees the memory allocated for the response payload.
  * 
  * @param response Pointer to the Response struct to free
  */

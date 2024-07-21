@@ -10,7 +10,7 @@ void test_encode_decode_message() {
     uint32_t expected_payload_size = sizeof(payload);
     Header header = {MESSAGE_REQUEST, COMMAND_SEND_MESSAGE, expected_payload_size, 0};
 
-    Message message = encode_message(&header, payload);
+    Message message = create_message(&header, payload);
     TEST_ASSERT_TRUE(message.size == sizeof(Header) + expected_payload_size);
     TEST_ASSERT_TRUE(message.data[0] == MESSAGE_REQUEST);
     TEST_ASSERT_TRUE(message.data[1] == COMMAND_SEND_MESSAGE);
@@ -19,7 +19,7 @@ void test_encode_decode_message() {
     TEST_ASSERT_TRUE(memcmp(message.data + 10, payload, expected_payload_size) == 0);
     
     Response response;
-    decode_message(message.data, message.size, &response);
+    parse_message(message.data, message.size, &response);
     TEST_ASSERT_EQUAL_UINT8(response.header.message_type, MESSAGE_REQUEST);
     TEST_ASSERT_EQUAL_UINT8(response.header.command, COMMAND_SEND_MESSAGE);
     TEST_ASSERT_EQUAL_UINT32(response.header.payload_size, expected_payload_size);
