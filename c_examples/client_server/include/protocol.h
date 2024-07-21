@@ -30,6 +30,13 @@
 #define ERROR_RECEIVE_FAILED 7
 #define ERROR_FILE_OPEN_FAILED 8
 
+#define HEADER_OFFSET_MESSAGE_TYPE 0
+#define HEADER_OFFSET_COMMAND 1
+#define HEADER_OFFSET_PAYLOAD_SIZE 2
+#define HEADER_OFFSET_CHUNK_INDEX 6
+#define HEADER_OFFSET_STATUS 10
+#define HEADER_OFFSET_ERROR_CODE 11
+
 #define MAX_PAYLOAD_SIZE 1024
 
 /**
@@ -39,7 +46,10 @@
  * command: command type (request file, send message, etc.)
  * payload_size: size of the payload data in bytes
  * chunk_index: index of the chunk (for chunked messages)
+ * status: status of the response (not used for requests)
+ * error_code: error code if status is ERROR (not used for requests)
  */
+#pragma pack(push, 1) // this ensures that the struct is packed with 1 byte alignment (i.e. without padding); this is needed so offset calculations are correct when converting creating the byte array message
 typedef struct {
     // using unsigned integers because we won't have negative values
     // using 8-bit integers because we only need 1 byte for certain values
@@ -49,11 +59,14 @@ typedef struct {
     uint8_t command;
     uint32_t payload_size;
     uint32_t chunk_index;
+    uint8_t status;
+    uint8_t error_code;
 } Header;
+#pragma pack(pop)
 
 #define HEADER_SIZE sizeof(Header)
 #define MAX_MESSAGE_SIZE (HEADER_SIZE + MAX_PAYLOAD_SIZE)
-#define HEADER_INIT {MESSAGE_NOT_SET, COMMAND_NOT_SET, 0, 0}
+#define HEADER_INIT {MESSAGE_NOT_SET, COMMAND_NOT_SET, 0, 0, STATUS_NOT_SET, ERROR_NOT_SET}
 
 /**
  * @brief holds the header and payload (data) that will be sent over the network.
@@ -71,17 +84,13 @@ typedef struct {
  * 
  * header: the parsed header metadata
  * payload: pointer to the parsed payload data
- * status: status of the response
- * error_code: error code if status is ERROR
  */
 typedef struct {
     Header header;
-    uint8_t* payload; 
-    uint8_t status;
-    uint8_t error_code;
+    uint8_t* payload;
 } Response;
 
-#define RESPONSE_INIT {HEADER_INIT, NULL, STATUS_NOT_SET, ERROR_NOT_SET}
+#define RESPONSE_INIT {HEADER_INIT, NULL}
 
 /**
  * @brief Frees the memory allocated for the Message struct and resets the members to their default values.

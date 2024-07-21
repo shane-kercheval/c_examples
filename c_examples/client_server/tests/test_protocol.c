@@ -5,21 +5,27 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 
-void test_encode_decode_message() {
+void test__header_size_matches_last_offset_plus_one() {
+    TEST_ASSERT_EQUAL_INT(HEADER_SIZE, HEADER_OFFSET_ERROR_CODE + 1);
+}
+
+void test__create_parse_message() {
     uint8_t payload[] = {'f', 'o', 'o', 'b', 'a', 'r'};
     uint32_t expected_payload_size = sizeof(payload);
-    Header header = {MESSAGE_REQUEST, COMMAND_REQUEST_FILE, expected_payload_size, 0};
+    Header header = {MESSAGE_REQUEST, COMMAND_REQUEST_FILE, expected_payload_size, 0, STATUS_NOT_SET, ERROR_NOT_SET};
     Message message;
 
     int result = create_message(&header, payload, &message);
     TEST_ASSERT_EQUAL_INT(STATUS_OK, result);
-    TEST_ASSERT_TRUE(message.size == sizeof(Header) + expected_payload_size);
-    TEST_ASSERT_TRUE(message.data[0] == MESSAGE_REQUEST);
-    TEST_ASSERT_TRUE(message.data[1] == COMMAND_REQUEST_FILE);
-    TEST_ASSERT_EQUAL_UINT32(*(uint32_t *)(message.data + 2), htonl(expected_payload_size));
-    TEST_ASSERT_EQUAL_UINT32(*(uint32_t *)(message.data + 6), htonl(0));
-    // check payload is correctly copied
-    TEST_ASSERT_TRUE(memcmp(message.data + 10, payload, expected_payload_size) == 0);
+    TEST_ASSERT_EQUAL_INT(sizeof(Header) + expected_payload_size, message.size);
+    TEST_ASSERT_EQUAL_UINT8(MESSAGE_REQUEST, message.data[HEADER_OFFSET_MESSAGE_TYPE]);
+    TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_FILE, message.data[HEADER_OFFSET_COMMAND]);
+    TEST_ASSERT_EQUAL_UINT32(htonl(expected_payload_size), *(uint32_t *)(message.data + HEADER_OFFSET_PAYLOAD_SIZE));
+    TEST_ASSERT_EQUAL_UINT32(htonl(0), *(uint32_t *)(message.data + HEADER_OFFSET_CHUNK_INDEX));
+    TEST_ASSERT_EQUAL_UINT8(STATUS_NOT_SET, message.data[HEADER_OFFSET_STATUS]);
+    TEST_ASSERT_EQUAL_UINT8(ERROR_NOT_SET, message.data[HEADER_OFFSET_ERROR_CODE]);
+    // check payload is correctly copied into the message
+    TEST_ASSERT_TRUE(memcmp(message.data + HEADER_SIZE, payload, expected_payload_size) == 0);
     
     Response response = RESPONSE_INIT;
     result = parse_message(message.data, message.size, &response);
@@ -28,28 +34,42 @@ void test_encode_decode_message() {
     TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_FILE, response.header.command);
     TEST_ASSERT_EQUAL_UINT32(expected_payload_size, response.header.payload_size);
     TEST_ASSERT_EQUAL_UINT32(0, response.header.chunk_index);
+    TEST_ASSERT_EQUAL_UINT8(STATUS_NOT_SET, response.header.status);
+    TEST_ASSERT_EQUAL_UINT8(ERROR_NOT_SET, response.header.error_code);
+    // check that the payload is correctly parsed/returned in the response
     TEST_ASSERT_TRUE(memcmp(response.payload, payload, expected_payload_size) == 0);
 
     destroy_message(&message);
     destroy_response(&response);
 }
 
-void test_max_payload_size() {
+void test__create_parse_message__max_payload_size() {
     uint8_t payload[MAX_PAYLOAD_SIZE];
     memset(payload, 'a', MAX_PAYLOAD_SIZE);  // fill payload with 'a'
-    Header header = {MESSAGE_REQUEST, COMMAND_REQUEST_FILE, MAX_PAYLOAD_SIZE, 0};
+    Header header = {MESSAGE_REQUEST, COMMAND_REQUEST_FILE, MAX_PAYLOAD_SIZE, 0, STATUS_NOT_SET, ERROR_NOT_SET};
     
     Message message;
     int result = create_message(&header, payload, &message);
     TEST_ASSERT_EQUAL_INT(STATUS_OK, result);
-    TEST_ASSERT_TRUE(message.size == sizeof(Header) + MAX_PAYLOAD_SIZE);
+    TEST_ASSERT_EQUAL_INT(sizeof(Header) + MAX_PAYLOAD_SIZE, message.size);
+    TEST_ASSERT_EQUAL_UINT8(MESSAGE_REQUEST, message.data[HEADER_OFFSET_MESSAGE_TYPE]);
+    TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_FILE, message.data[HEADER_OFFSET_COMMAND]);
+    TEST_ASSERT_EQUAL_UINT32(htonl(MAX_PAYLOAD_SIZE), *(uint32_t *)(message.data + HEADER_OFFSET_PAYLOAD_SIZE));
+    TEST_ASSERT_EQUAL_UINT32(htonl(0), *(uint32_t *)(message.data + HEADER_OFFSET_CHUNK_INDEX));
+    TEST_ASSERT_EQUAL_UINT8(STATUS_NOT_SET, message.data[HEADER_OFFSET_STATUS]);
+    TEST_ASSERT_EQUAL_UINT8(ERROR_NOT_SET, message.data[HEADER_OFFSET_ERROR_CODE]);
     // check payload is correctly copied
-    TEST_ASSERT_TRUE(memcmp(message.data + 10, payload, MAX_PAYLOAD_SIZE) == 0);
+    TEST_ASSERT_TRUE(memcmp(message.data + HEADER_SIZE, payload, MAX_PAYLOAD_SIZE) == 0);
 
     Response response = RESPONSE_INIT;
     result = parse_message(message.data, message.size, &response);
     TEST_ASSERT_EQUAL_INT(STATUS_OK, result);
+    TEST_ASSERT_EQUAL_UINT8(MESSAGE_REQUEST, response.header.message_type);
+    TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_FILE, response.header.command);
     TEST_ASSERT_EQUAL_UINT32(MAX_PAYLOAD_SIZE, response.header.payload_size);
+    TEST_ASSERT_EQUAL_UINT32(0, response.header.chunk_index);
+    TEST_ASSERT_EQUAL_UINT8(STATUS_NOT_SET, response.header.status);
+    TEST_ASSERT_EQUAL_UINT8(ERROR_NOT_SET, response.header.error_code);
     // check that the payload is correctly parsed/returned in the response
     TEST_ASSERT_TRUE(memcmp(response.payload, payload, MAX_PAYLOAD_SIZE) == 0);
 
@@ -57,7 +77,7 @@ void test_max_payload_size() {
     destroy_response(&response);
 }
 
-void test_exceed_max_payload_size() {
+void test__create_message__exceed_max_payload_size() {
     uint8_t payload[MAX_PAYLOAD_SIZE + 1];
     memset(payload, 'a', MAX_PAYLOAD_SIZE + 1); // Fill payload with 'a'
     Header header = {MESSAGE_REQUEST, COMMAND_REQUEST_FILE, MAX_PAYLOAD_SIZE + 1, 0};
@@ -67,7 +87,7 @@ void test_exceed_max_payload_size() {
     TEST_ASSERT_EQUAL_INT(ERROR_MAX_PAYLOAD_SIZE_EXCEEDED, result);
 }
 
-void test_invalid_data_size() {
+void test__parse_message__invalid_data_size() {
     // Not enough data to form a complete header
     uint8_t data[HEADER_SIZE - 1];
     memset(data, 0, HEADER_SIZE - 1);
@@ -82,9 +102,10 @@ void tearDown(void) {}
 
 int main(void) {
     UNITY_BEGIN();
-    RUN_TEST(test_encode_decode_message);
-    RUN_TEST(test_max_payload_size);
-    RUN_TEST(test_exceed_max_payload_size);
-    RUN_TEST(test_invalid_data_size);
+    RUN_TEST(test__header_size_matches_last_offset_plus_one);
+    RUN_TEST(test__create_parse_message);
+    RUN_TEST(test__create_parse_message__max_payload_size);
+    RUN_TEST(test__create_message__exceed_max_payload_size);
+    RUN_TEST(test__parse_message__invalid_data_size);
     return UNITY_END();
 }
