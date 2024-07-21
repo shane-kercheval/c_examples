@@ -15,7 +15,6 @@
 #define COMMAND_NOT_SET 0
 #define COMMAND_REQUEST_FILE 1
 #define COMMAND_REQUEST_METADATA 2
-#define COMMAND_SEND_MESSAGE 3
 
 #define STATUS_OK 0
 #define STATUS_ERROR 1
@@ -25,6 +24,10 @@
 #define ERROR_UNKNOWN_COMMAND 1
 #define ERROR_FILE_NOT_FOUND 2
 #define ERROR_MAX_PAYLOAD_SIZE_EXCEEDED 3
+#define ERROR_MEMORY_ALLOCATION_FAILED 4
+#define ERROR_INVALID_DATA_SIZE 5
+
+#define MAX_PAYLOAD_SIZE 1024
 
 /**
  * @brief Header struct that contains the metadata for a message.
@@ -46,7 +49,6 @@ typedef struct {
 } Header;
 
 #define HEADER_SIZE sizeof(Header)
-#define MAX_PAYLOAD_SIZE 1024
 #define MAX_MESSAGE_SIZE (HEADER_SIZE + MAX_PAYLOAD_SIZE)
 #define HEADER_INIT {MESSAGE_NOT_SET, COMMAND_NOT_SET, 0, 0}
 
@@ -60,7 +62,6 @@ typedef struct {
     uint8_t* data;
     uint32_t size;
 } Message;
-
 
 /**
  * @brief holds the parsed response header and payload data.
@@ -98,8 +99,10 @@ void destroy_response(Response* response);
  * @param header Pointer to the Header struct.
  * @param payload Pointer to the byte array payload data.
  * @param message Pointer to a Message struct to store the final byte array and its size. The caller is responsible for freeing the memory via `destroy_message`.
+ * 
+ * @return `STATUS_OK` if the message was created successfully, otherwise an error code starting with `ERROR_`.
  */
-void create_message(const Header* header, const uint8_t* payload, Message* message);
+int create_message(const Header* header, const uint8_t* payload, Message* message);
 
 /**
  * @brief Parses a raw byte array into a Response struct containing the Header and payload.
@@ -110,7 +113,9 @@ void create_message(const Header* header, const uint8_t* payload, Message* messa
  * @param data Pointer to the byte array received over the network, containing the header and payload.
  * @param data_size The size of the byte array data.
  * @param response Pointer to a Response struct to store the parsed message. The caller is responsible for freeing the memory via `destroy_response`.
+ * 
+ * @return `STATUS_OK` if the message was parsed successfully, otherwise an error code starting with `ERROR_`.
  */
-void parse_message(const uint8_t* data, uint32_t data_size, Response* response);
+int parse_message(const uint8_t* data, uint32_t data_size, Response* response);
 
 #endif // PROTOCOL_H

@@ -5,15 +5,15 @@
 #include <arpa/inet.h>
 
 
-void create_message(const Header* header, const uint8_t* payload, Message* message) {
-    // TODO: what is the max payload size? What happens if it is larger i.e. chunk index out of range?
-    message->size = sizeof(Header) + header->payload_size;
+int create_message(const Header* header, const uint8_t* payload, Message* message) {
+    if (header->payload_size > MAX_PAYLOAD_SIZE) {
+        return ERROR_MAX_PAYLOAD_SIZE_EXCEEDED;
+    }
+    message->size = HEADER_SIZE + header->payload_size;
     // define a byte array of the size of the message
     message->data = (uint8_t*)malloc(message->size);
     if (message->data == NULL) {
-        fprintf(stderr, "Error: Memory allocation failed for message->data\n");
-        // TODO: not sure if this is the best way to handle this error
-        exit(EXIT_FAILURE);
+        return ERROR_MEMORY_ALLOCATION_FAILED;
     }
     // first byte is the message type
     message->data[0] = header->message_type;
@@ -31,13 +31,12 @@ void create_message(const Header* header, const uint8_t* payload, Message* messa
     if (header->payload_size > 0 && payload != NULL) {
         memcpy(message->data + 10, payload, header->payload_size);
     }
+    return STATUS_OK;
 }
 
-void parse_message(const uint8_t* data, uint32_t data_size, Response* response) {
-    if (data_size < sizeof(Header)) {
-        fprintf(stderr, "Error: Data size is too small to contain the header\n");
-        // TODO: not sure if this is the best way to handle this error
-        exit(EXIT_FAILURE);
+int parse_message(const uint8_t* data, uint32_t data_size, Response* response) {
+    if (data_size < HEADER_SIZE) {
+        return ERROR_INVALID_DATA_SIZE;
     }
     // first byte is the message type
     response->header.message_type = data[0];
@@ -48,21 +47,19 @@ void parse_message(const uint8_t* data, uint32_t data_size, Response* response) 
     response->header.payload_size = ntohl(*(uint32_t*)(data + 2));
     response->header.chunk_index = ntohl(*(uint32_t*)(data + 6));
     if (response->header.payload_size > 0) {
-        if (data_size < (sizeof(Header) + response->header.payload_size)) {
-            // TODO: what does it mean and what should we do if the data isn't large enough to contain the payload?
-            exit(EXIT_FAILURE);
+        if (data_size < (HEADER_SIZE + response->header.payload_size)) {
+            return ERROR_INVALID_DATA_SIZE;
         }
         // create a byte array of the size of the payload and then copy the payload into it (starting at the 11th byte)
         response->payload = (uint8_t*)malloc(response->header.payload_size);
         if (response->payload == NULL) {
-            // TODO: not sure if this is the best way to handle this error
-            fprintf(stderr, "Error: Memory allocation failed for response.payload\n");
-            exit(EXIT_FAILURE);
+            return ERROR_MEMORY_ALLOCATION_FAILED;
         }
         memcpy(response->payload, data + 10, response->header.payload_size);
     } else {
         response->payload = NULL;
     }
+    return STATUS_OK;
 }
 
 void destroy_message(Message* message) {
