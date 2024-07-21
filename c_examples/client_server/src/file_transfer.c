@@ -8,7 +8,6 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 
-
 #define SERVER_FILE_PATH "/code/c_examples/client_server/tests/fake_server_files"
 
 int request_file_metadata(int socket, const char* file_name, Response* response) {
@@ -39,7 +38,6 @@ int request_file_metadata(int socket, const char* file_name, Response* response)
     status = parse_message(buffer, bytes_received, &response);
     return status;
 }
-
 
 int send_file_metadata(int socket, const char* file_name) {
     // the file name does not includfe the path, so we need to prepend the path

@@ -16,7 +16,6 @@
  */
 int request_file_metadata(int socket, const char* file_name, Response* response);
 
-
 /**
  * @brief Handle a COMMAND_REQUEST_METADATA request from the client.
  * 
@@ -26,7 +25,6 @@ int request_file_metadata(int socket, const char* file_name, Response* response)
  * @return 0 (STATUS_OK) if the request was successful, otherwise an error code starting with `ERROR_`.
  */
 int send_file_metadata(int socket, const char* file_name);
-
 
 /**
  * @brief Send a COMMAND_REQUEST_CONTENTS request to the server.
@@ -50,7 +48,6 @@ int request_file_contents(int socket, const char* file_name, Response* response)
  * @return 0 (STATUS_OK) if the request was successful, otherwise an error code starting with `ERROR_`.
  */
 int send_file_contents(int socket, const char* file_name);
-
 
 /**
  * @brief Handle a request from the client (e.g COMMAND_REQUEST_METADATA or COMMAND_REQUEST_CONTENTS).
