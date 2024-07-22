@@ -4,8 +4,18 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+
 /**
- * @brief Connects to a server with the given IP address and port. Exits the program if the connection fails.
+ * @brief Creates a socket and connects it to a given IP address and port.
+ * 
+ * @param ip_address The IP address of the server.
+ * @param port The port of the server.
+ * @return The socket file descriptor of the server connection, or -1 if the connection fails.
+ */
+int connect_socket(const char* ip_address, in_addr_t port);
+
+/**
+ * @brief Creates a socket and connects it to a given IP address and port. Exits the program if the connection fails.
  * 
  * @param ip_address The IP address of the server.
  * @param port The port of the server.
@@ -14,7 +24,7 @@
 int connect_or_die(const char* ip_address, in_addr_t port);
 
 /**
- * @brief Connects to a server with the given IP address and port. Retries the connection if it fails. Exits the program if the connection fails after the maximum number of retries.
+ * @brief Creates a socket and connects it to a given IP address and port. Retries the connection if it fails. Exits the program if the connection fails after the maximum number of retries.
  * 
  * @param ip_address The IP address of the server.
  * @param port The port of the server.
@@ -25,7 +35,7 @@ int connect_or_die(const char* ip_address, in_addr_t port);
 int connect_with_retry_or_die(const char* ip_address, in_addr_t port, int max_retries, int retry_delay);
 
 /**
- * @brief Binds to a port. Exits the program if the binding fails.
+ * @brief Creates a socket and binds to a port. Exits the program if the binding fails.
  * 
  * @param port The port to bind to.
  * @return The socket file descriptor of the bound server socket/port.

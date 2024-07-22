@@ -13,7 +13,8 @@
 // https://www.youtube.com/watch?v=LtXEMwSG5-8 - Socket Programming Tutorial In C For Beginners | Part 1 | Eduonix
 // https://www.youtube.com/watch?v=mStnzIEprH8 - Socket Programming Tutorial In C For Beginners | Part 2 | Eduonix
 
-int connect_or_die(const char* ip_address, in_addr_t port) {
+
+int connect_socket(const char* ip_address, in_addr_t port) {
     // AF_INET: IPv4; SOCK_STREAM: TCP; 0: default protocol
     int server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == -1) {
@@ -37,6 +38,14 @@ int connect_or_die(const char* ip_address, in_addr_t port) {
     }
     status = connect(server_socket, (struct sockaddr *)&address, sizeof(address));
     if (status == -1) {
+        return -1;
+    }
+    return server_socket;
+}
+
+int connect_or_die(const char* ip_address, in_addr_t port) {
+    int server_socket = connect_socket(ip_address, port);
+    if (server_socket == -1) {
         perror("connect");
         socket_cleanup(server_socket);
         exit(1);

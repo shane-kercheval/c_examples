@@ -12,30 +12,44 @@
 #define PORT 9002
 #define ADDRESS "0.0.0.0"
 
+int server_running = 1;
+pthread_t server_thread;
+pthread_mutex_t server_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+/**
+ * This function is a worker thread that acts as a server.
+ */
 void* server_worker(void* arg) {
     int server_socket = bind_or_die(PORT);
     listen_or_die(server_socket, 1);
-    int client_socket = accept_or_die(server_socket);
 
-    uint8_t buffer[MAX_MESSAGE_SIZE];
-    ssize_t bytes_received = receive_or_die(client_socket, buffer, MAX_MESSAGE_SIZE);
-    Response response;
-    int status = parse_message(buffer, bytes_received, &response);
-    if (status != STATUS_OK) {
-        fprintf(stderr, "Error parsing message\n");
+    while (1) {
+        int client_socket = accept_or_die(server_socket);
+        // after accept, check if the server is still running
+        pthread_mutex_lock(&server_mutex);
+        if (!server_running) {
+            pthread_mutex_unlock(&server_mutex);
+            break;
+        }
+        pthread_mutex_unlock(&server_mutex);
+
+        uint8_t buffer[MAX_MESSAGE_SIZE];
+        ssize_t bytes_received = receive_or_die(client_socket, buffer, MAX_MESSAGE_SIZE);
+        Response response;
+        int status = parse_message(buffer, bytes_received, &response);
+        if (status != STATUS_OK) {
+            fprintf(stderr, "Error parsing message\n");
+            socket_cleanup(client_socket);
+            continue;
+        }
+        // TODO: handle any request via handle_request(client_socket, &response.header, response.payload);
+        send_file_metadata(client_socket, (const char*)response.payload);
         socket_cleanup(client_socket);
-        socket_cleanup(server_socket);
         destroy_response(&response);
-        return NULL;
     }
-    // TODO: handle any request via handle_request(client_socket, &response.header, response.payload);
-    send_file_metadata(client_socket, (const char*)response.payload);
-    socket_cleanup(client_socket);
     socket_cleanup(server_socket);
-    destroy_response(&response);
     return NULL;
 }
-
 void test__request_file_metadata__no_server_listening() {
     int socket = 0;
     const char* file_name = "test.txt";
@@ -59,22 +73,14 @@ void test__send_file_metadata__no_client_listening() {
 }
 
 void test__request_file_metadata__success() {
-    pthread_t server_thread;
-    int status = pthread_create(&server_thread, NULL, server_worker, NULL);
-    if (status != 0) {
-        perror("pthread_create");
-        exit(1);
-    }
     int server_socket = connect_with_retry_or_die(ADDRESS, PORT, 3, 1);
     const char* file_name = "test.txt";
     Response response;
-    status = request_file_metadata(server_socket, file_name, &response);
-    pthread_join(server_thread, NULL);
+    int status = request_file_metadata(server_socket, file_name, &response);
     socket_cleanup(server_socket);
 
     char* expected_metadata = "Size: 35";
     uint32_t expected_payload_size = strlen_null_term(expected_metadata);
-
     TEST_ASSERT_EQUAL_INT(STATUS_OK, status);
     TEST_ASSERT_EQUAL_UINT8(MESSAGE_RESPONSE, response.header.message_type);
     TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_METADATA, response.header.command);
@@ -92,9 +98,31 @@ void tearDown(void) {}
 
 int main(void) {
     UNITY_BEGIN();
+    ////
+    // start server in a separate thread
+    ////
+    int status = pthread_create(&server_thread, NULL, server_worker, NULL);
+    if (status != 0) {
+        perror("pthread_create");
+        exit(1);
+    }
+    ////
+    // run unit tests
+    ////
     RUN_TEST(test__request_file_metadata__no_server_listening);
     RUN_TEST(test__send_file_metadata__file_not_exists);
     RUN_TEST(test__send_file_metadata__no_client_listening);
     RUN_TEST(test__request_file_metadata__success);
+    ////
+    // stop the server
+    ////
+    pthread_mutex_lock(&server_mutex);
+    server_running = 0;
+    pthread_mutex_unlock(&server_mutex);
+    // send one more connection request to the server to interrupt the accept call
+    int client_socket = connect_socket(ADDRESS, PORT);
+    socket_cleanup(client_socket);
+    // wait for the server to finish cleaning up
+    pthread_join(server_thread, NULL);
     return UNITY_END();
 }
