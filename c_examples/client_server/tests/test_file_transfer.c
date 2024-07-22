@@ -28,10 +28,8 @@ void* server_worker(void* arg) {
         destroy_response(&response);
         return NULL;
     }
-    // handle_request(client_socket, &response.header, response.payload);
-    fprintf(stderr, "Received message: %s\n", response.payload);
+    // TODO: handle any request via handle_request(client_socket, &response.header, response.payload);
     send_file_metadata(client_socket, (const char*)response.payload);
-    fprintf(stderr, "Sent metadata\n");
     socket_cleanup(client_socket);
     socket_cleanup(server_socket);
     destroy_response(&response);
@@ -52,9 +50,8 @@ void test__request_file_metadata__success() {
     pthread_join(server_thread, NULL);
     socket_cleanup(server_socket);
 
-    char* metadata = (char*) response.payload;
-    fprintf(stderr, "Metadata: `%s`\n", metadata);
-    uint32_t expected_payload_size = strlen_null_term(metadata);
+    char* expected_metadata = "Size: 35";
+    uint32_t expected_payload_size = strlen_null_term(expected_metadata);
 
     TEST_ASSERT_EQUAL_INT(STATUS_OK, status);
     TEST_ASSERT_EQUAL_UINT8(MESSAGE_RESPONSE, response.header.message_type);
@@ -64,8 +61,7 @@ void test__request_file_metadata__success() {
     TEST_ASSERT_EQUAL_UINT8(STATUS_OK, response.header.status);
     TEST_ASSERT_EQUAL_UINT8(ERROR_NOT_SET, response.header.error_code);
     // check that the payload is correctly parsed/returned in the response
-    TEST_ASSERT_TRUE(memcmp(response.payload, metadata, expected_payload_size) == 0);
-    
+    TEST_ASSERT_TRUE(memcmp(response.payload, expected_metadata, expected_payload_size) == 0);
     destroy_response(&response);
 }
 
