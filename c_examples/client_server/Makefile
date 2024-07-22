@@ -26,7 +26,9 @@ tests: compile
 
 tests_memory: BUILD_TYPE := Release
 tests_memory: compile
+	valgrind --leak-check=full --track-origins=yes $(BUILD_DIR)/tests/test_utils
 	valgrind --leak-check=full --track-origins=yes $(BUILD_DIR)/tests/test_protocol
+	valgrind --leak-check=full --track-origins=yes $(BUILD_DIR)/tests/test_file_transfer
 
 clean:
 	rm -rf $(BUILD_DIR)
