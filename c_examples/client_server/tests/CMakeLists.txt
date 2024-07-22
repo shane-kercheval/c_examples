@@ -13,6 +13,6 @@ target_include_directories(test_protocol PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/uni
 add_test(NAME test_protocol COMMAND test_protocol)
 
 add_executable(test_file_transfer test_file_transfer.c)
-target_link_libraries(test_file_transfer file_transfer unity)
+target_link_libraries(test_file_transfer file_transfer sockets unity)
 target_include_directories(test_file_transfer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/unity)
 add_test(NAME test_file_transfer COMMAND test_file_transfer)
