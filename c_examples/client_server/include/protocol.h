@@ -6,21 +6,19 @@
 
 #include <stdint.h>
 
-#define MESSAGE_NOT_SET 0
-#define MESSAGE_ERROR 1
-#define MESSAGE_REQUEST 2
-#define MESSAGE_RESPONSE 3
-#define MESSAGE_CHUNK 4
+#define NOT_SET 255
 
-#define COMMAND_NOT_SET 0
+#define MESSAGE_REQUEST 1
+#define MESSAGE_RESPONSE 2
+#define MESSAGE_RESPONSE_CHUNK 3
+#define MESSAGE_RESPONSE_LAST_CHUNK  4
+
 #define COMMAND_REQUEST_FILE 1
 #define COMMAND_REQUEST_METADATA 2
 
 #define STATUS_OK 0
 #define STATUS_ERROR 1
-#define STATUS_NOT_SET 100
 
-#define ERROR_NOT_SET 0
 #define ERROR_UNKNOWN_COMMAND 1
 #define ERROR_FILE_NOT_FOUND 2
 #define ERROR_MAX_PAYLOAD_SIZE_EXCEEDED 3
@@ -67,7 +65,7 @@ typedef struct {
 
 #define HEADER_SIZE sizeof(Header)
 #define MAX_MESSAGE_SIZE (HEADER_SIZE + MAX_PAYLOAD_SIZE)
-#define HEADER_INIT {MESSAGE_NOT_SET, COMMAND_NOT_SET, 0, 0, STATUS_NOT_SET, ERROR_NOT_SET}
+#define HEADER_INIT {NOT_SET, NOT_SET, 0, 0, NOT_SET, NOT_SET}
 
 /**
  * @brief holds the header and payload (data) that will be sent over the network.

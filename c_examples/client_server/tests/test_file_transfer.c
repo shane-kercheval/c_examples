@@ -48,6 +48,7 @@ void* server_worker(void* arg) {
     socket_cleanup(server_socket);
     return NULL;
 }
+
 void test__request_file_metadata__no_server_listening() {
     int socket = 0;
     const char* file_name = "test.txt";
@@ -61,6 +62,13 @@ void test__send_file_metadata__file_not_exists() {
     const char* file_name = "this_file_does_not_exist.txt";
     int status = send_file_metadata(socket, file_name);
     TEST_ASSERT_EQUAL_INT(ERROR_FILE_NOT_FOUND, status);
+}
+
+void test__send_file_metadata__file_name_too_long() {
+    int socket = 0;
+    char file_name[501]; memset(file_name, 'a', 500); file_name[500] = '\0';
+    int status = send_file_metadata(socket, file_name);
+    TEST_ASSERT_EQUAL_INT(ERROR_FILE_OPEN_FAILED, status);
 }
 
 void test__send_file_metadata__no_client_listening() {
@@ -85,7 +93,7 @@ void test__request_file_metadata__send_file_metadata__success() {
     TEST_ASSERT_EQUAL_UINT32(expected_payload_size, response.header.payload_size);
     TEST_ASSERT_EQUAL_UINT32(0, response.header.chunk_index);
     TEST_ASSERT_EQUAL_UINT8(STATUS_OK, response.header.status);
-    TEST_ASSERT_EQUAL_UINT8(ERROR_NOT_SET, response.header.error_code);
+    TEST_ASSERT_EQUAL_UINT8(NOT_SET, response.header.error_code);
     // check that the payload is correctly parsed/returned in the response
     TEST_ASSERT_TRUE(memcmp(response.payload, expected_metadata, expected_payload_size) == 0);
     destroy_response(&response);
@@ -109,6 +117,7 @@ int main(void) {
     ////
     RUN_TEST(test__request_file_metadata__no_server_listening);
     RUN_TEST(test__send_file_metadata__file_not_exists);
+    RUN_TEST(test__send_file_metadata__file_name_too_long);
     RUN_TEST(test__send_file_metadata__no_client_listening);
     RUN_TEST(test__request_file_metadata__send_file_metadata__success);
     ////

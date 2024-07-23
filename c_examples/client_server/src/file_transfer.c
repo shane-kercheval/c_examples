@@ -11,11 +11,9 @@
 
 #define SERVER_FILE_PATH "/code/c_examples/client_server/tests/fake_server_files"
 
-int _send_error_response(int socket, uint8_t command, uint8_t error_code) {
-    char error_message[256];
-    snprintf(error_message, sizeof(error_message), "Error code: %d", error_code);
+int _send_error_response(int socket, uint8_t command, uint8_t error_code, const char* error_message) {
     Header header;
-    header.message_type = MESSAGE_ERROR;
+    header.message_type = MESSAGE_RESPONSE;
     header.command = command;
     header.payload_size = strlen_null_term(error_message);
     header.chunk_index = 0;
@@ -40,8 +38,8 @@ int _send_request(int socket, uint8_t command, const char* file_name) {
     header.command = command;
     header.payload_size = payload_size;
     header.chunk_index = 0;
-    header.status = STATUS_NOT_SET;
-    header.error_code = ERROR_NOT_SET;
+    header.status = NOT_SET;
+    header.error_code = NOT_SET;
 
     // convert string (filename) to raw bytes
     Message message;
@@ -86,31 +84,38 @@ int send_file_metadata(int socket, const char* file_name) {
     // and some of the printed characters were discarded. 
     int status = snprintf(full_path, sizeof(full_path), "%s/%s", SERVER_FILE_PATH, file_name);
     if (status < 0 || status >= sizeof(full_path)) {
-        _send_error_response(socket, COMMAND_REQUEST_METADATA, ERROR_FILE_OPEN_FAILED);
+        char error_message[256];
+        snprintf(error_message, sizeof(error_message), "Error creating full path; status: %d", status);
+        _send_error_response(socket, COMMAND_REQUEST_METADATA, ERROR_FILE_OPEN_FAILED, error_message);
         return ERROR_FILE_OPEN_FAILED;
     }
     // man page: The stat utility displays information about the file pointed to by file.
     struct stat file_stat;
     if (stat(full_path, &file_stat) == -1) {
-        _send_error_response(socket, COMMAND_REQUEST_METADATA, ERROR_FILE_NOT_FOUND);
+        const char* error_message = "Error getting file stats";
+        _send_error_response(socket, COMMAND_REQUEST_METADATA, ERROR_FILE_NOT_FOUND, error_message);
         return ERROR_FILE_NOT_FOUND;
     }
 
     char metadata[256];
     // let's just return the size of the file for now
     snprintf(metadata, sizeof(metadata), "Size: %ld", file_stat.st_size);
-    Header header = {MESSAGE_RESPONSE, COMMAND_REQUEST_METADATA, strlen_null_term(metadata), 0};
+    // Header header = {MESSAGE_RESPONSE, COMMAND_REQUEST_METADATA, strlen_null_term(metadata), 0};
+    Header header = {MESSAGE_RESPONSE, COMMAND_REQUEST_METADATA, strlen_null_term(metadata), 0, STATUS_OK, NOT_SET};
     Message message;
     status = create_message(&header, (const uint8_t*)metadata, &message);
     if (status != STATUS_OK) {
         destroy_message(&message); // free memory in case of error (we aren't sure if any was allocated)
-        _send_error_response(socket, COMMAND_REQUEST_METADATA, status);
+        char error_message[256];
+        snprintf(error_message, sizeof(error_message), "Error creating message; status: %d", status);
+        _send_error_response(socket, COMMAND_REQUEST_METADATA, status, error_message);
         return status;
     }
     ssize_t bytes_sent = send(socket, message.data, message.size, 0);
     destroy_message(&message);
     if (bytes_sent <= 0) {
-        _send_error_response(socket, COMMAND_REQUEST_METADATA, ERROR_SEND_FAILED);
+        const char* error_message = "Error sending message";
+        _send_error_response(socket, COMMAND_REQUEST_METADATA, ERROR_SEND_FAILED, error_message);
         return ERROR_SEND_FAILED;
     }
     return STATUS_OK;
@@ -131,7 +136,9 @@ int handle_request(int socket, const Header* header, const uint8_t* payload) {
         case COMMAND_REQUEST_FILE:
             return send_file_contents(socket, (const char*)payload);
         default:
-            return _send_error_response(socket, header->command, ERROR_INVALID_COMMAND);
+            char error_message[256];
+            snprintf(error_message, sizeof(error_message), "Invalid command: %d", header->command);
+            return _send_error_response(socket, header->command, ERROR_INVALID_COMMAND, error_message);
     }
     return ERROR_INVALID_COMMAND;
 }

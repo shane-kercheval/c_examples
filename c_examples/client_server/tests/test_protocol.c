@@ -12,7 +12,7 @@ void test__header_size_matches_last_offset_plus_one() {
 void test__create_parse_message() {
     uint8_t payload[] = {'f', 'o', 'o', 'b', 'a', 'r'};
     uint32_t expected_payload_size = sizeof(payload);
-    Header header = {MESSAGE_REQUEST, COMMAND_REQUEST_FILE, expected_payload_size, 0, STATUS_NOT_SET, ERROR_NOT_SET};
+    Header header = {MESSAGE_REQUEST, COMMAND_REQUEST_FILE, expected_payload_size, 0, NOT_SET, NOT_SET};
     Message message;
 
     int result = create_message(&header, payload, &message);
@@ -22,8 +22,8 @@ void test__create_parse_message() {
     TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_FILE, message.data[HEADER_OFFSET_COMMAND]);
     TEST_ASSERT_EQUAL_UINT32(htonl(expected_payload_size), *(uint32_t *)(message.data + HEADER_OFFSET_PAYLOAD_SIZE));
     TEST_ASSERT_EQUAL_UINT32(htonl(0), *(uint32_t *)(message.data + HEADER_OFFSET_CHUNK_INDEX));
-    TEST_ASSERT_EQUAL_UINT8(STATUS_NOT_SET, message.data[HEADER_OFFSET_STATUS]);
-    TEST_ASSERT_EQUAL_UINT8(ERROR_NOT_SET, message.data[HEADER_OFFSET_ERROR_CODE]);
+    TEST_ASSERT_EQUAL_UINT8(NOT_SET, message.data[HEADER_OFFSET_STATUS]);
+    TEST_ASSERT_EQUAL_UINT8(NOT_SET, message.data[HEADER_OFFSET_ERROR_CODE]);
     // check payload is correctly copied into the message
     TEST_ASSERT_TRUE(memcmp(message.data + HEADER_SIZE, payload, expected_payload_size) == 0);
     
@@ -34,8 +34,8 @@ void test__create_parse_message() {
     TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_FILE, response.header.command);
     TEST_ASSERT_EQUAL_UINT32(expected_payload_size, response.header.payload_size);
     TEST_ASSERT_EQUAL_UINT32(0, response.header.chunk_index);
-    TEST_ASSERT_EQUAL_UINT8(STATUS_NOT_SET, response.header.status);
-    TEST_ASSERT_EQUAL_UINT8(ERROR_NOT_SET, response.header.error_code);
+    TEST_ASSERT_EQUAL_UINT8(NOT_SET, response.header.status);
+    TEST_ASSERT_EQUAL_UINT8(NOT_SET, response.header.error_code);
     // check that the payload is correctly parsed/returned in the response
     TEST_ASSERT_TRUE(memcmp(response.payload, payload, expected_payload_size) == 0);
 
@@ -46,7 +46,7 @@ void test__create_parse_message() {
 void test__create_parse_message__max_payload_size() {
     uint8_t payload[MAX_PAYLOAD_SIZE];
     memset(payload, 'a', MAX_PAYLOAD_SIZE);  // fill payload with 'a'
-    Header header = {MESSAGE_REQUEST, COMMAND_REQUEST_FILE, MAX_PAYLOAD_SIZE, 0, STATUS_NOT_SET, ERROR_NOT_SET};
+    Header header = {MESSAGE_REQUEST, COMMAND_REQUEST_FILE, MAX_PAYLOAD_SIZE, 0, NOT_SET, NOT_SET};
     
     Message message;
     int result = create_message(&header, payload, &message);
@@ -56,8 +56,8 @@ void test__create_parse_message__max_payload_size() {
     TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_FILE, message.data[HEADER_OFFSET_COMMAND]);
     TEST_ASSERT_EQUAL_UINT32(htonl(MAX_PAYLOAD_SIZE), *(uint32_t *)(message.data + HEADER_OFFSET_PAYLOAD_SIZE));
     TEST_ASSERT_EQUAL_UINT32(htonl(0), *(uint32_t *)(message.data + HEADER_OFFSET_CHUNK_INDEX));
-    TEST_ASSERT_EQUAL_UINT8(STATUS_NOT_SET, message.data[HEADER_OFFSET_STATUS]);
-    TEST_ASSERT_EQUAL_UINT8(ERROR_NOT_SET, message.data[HEADER_OFFSET_ERROR_CODE]);
+    TEST_ASSERT_EQUAL_UINT8(NOT_SET, message.data[HEADER_OFFSET_STATUS]);
+    TEST_ASSERT_EQUAL_UINT8(NOT_SET, message.data[HEADER_OFFSET_ERROR_CODE]);
     // check payload is correctly copied
     TEST_ASSERT_TRUE(memcmp(message.data + HEADER_SIZE, payload, MAX_PAYLOAD_SIZE) == 0);
 
@@ -68,8 +68,8 @@ void test__create_parse_message__max_payload_size() {
     TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_FILE, response.header.command);
     TEST_ASSERT_EQUAL_UINT32(MAX_PAYLOAD_SIZE, response.header.payload_size);
     TEST_ASSERT_EQUAL_UINT32(0, response.header.chunk_index);
-    TEST_ASSERT_EQUAL_UINT8(STATUS_NOT_SET, response.header.status);
-    TEST_ASSERT_EQUAL_UINT8(ERROR_NOT_SET, response.header.error_code);
+    TEST_ASSERT_EQUAL_UINT8(NOT_SET, response.header.status);
+    TEST_ASSERT_EQUAL_UINT8(NOT_SET, response.header.error_code);
     // check that the payload is correctly parsed/returned in the response
     TEST_ASSERT_TRUE(memcmp(response.payload, payload, MAX_PAYLOAD_SIZE) == 0);
 
