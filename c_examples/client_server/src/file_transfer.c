@@ -33,11 +33,11 @@ int _send_error_response(int socket, uint8_t command, uint8_t error_code) {
     return error_code;
 }
 
-int request_file_metadata(int socket, const char* file_name, Response* response) {
+int _send_request(int socket, uint8_t command, const char* file_name) {
     uint32_t payload_size = strlen_null_term(file_name);
     Header header;
     header.message_type = MESSAGE_REQUEST;
-    header.command = COMMAND_REQUEST_METADATA;
+    header.command = command;
     header.payload_size = payload_size;
     header.chunk_index = 0;
     header.status = STATUS_NOT_SET;
@@ -56,6 +56,14 @@ int request_file_metadata(int socket, const char* file_name, Response* response)
     destroy_message(&message); // free memory allocated in `create_message` before continuing/returning
     if (bytes_sent <= 0) {
         return ERROR_SEND_FAILED;
+    }
+    return STATUS_OK;
+}
+
+int request_file_metadata(int socket, const char* file_name, Response* response) {
+    int status = _send_request(socket, COMMAND_REQUEST_METADATA, file_name);
+    if (status != STATUS_OK) {
+        return status;
     }
     // receive the data from the server
     uint8_t buffer[MAX_MESSAGE_SIZE];
@@ -109,11 +117,11 @@ int send_file_metadata(int socket, const char* file_name) {
 }
 
 int request_file_contents(int socket, const char* file_name, Response* response) {
-    return 0;
+    return STATUS_OK;
 }
 
 int send_file_contents(int socket, const char* file_name) {
-    return 0;
+    return STATUS_OK;
 }
 
 int handle_request(int socket, const Header* header, const uint8_t* payload) {
