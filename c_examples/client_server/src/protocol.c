@@ -36,20 +36,26 @@ int create_message(const Header* header, const uint8_t* payload, Message* messag
     return STATUS_OK;
 }
 
-int parse_message(const uint8_t* data, uint32_t data_size, Response* response) {
+int extract_header(const uint8_t* data, uint32_t data_size, Header* header) {
     if (data_size < HEADER_SIZE) {
         return ERROR_INVALID_DATA_SIZE;
     }
-    // first byte is the message type
-    response->header.message_type = data[HEADER_OFFSET_MESSAGE_TYPE];
-    // second byte is the command
-    response->header.command = data[HEADER_OFFSET_COMMAND];
-    // next four bytes are the payload size
-    // deconvert the integer from network byte order (big-endian) to host byte order
-    response->header.payload_size = ntohl(*(uint32_t*)(data + HEADER_OFFSET_PAYLOAD_SIZE));
-    response->header.chunk_index = ntohl(*(uint32_t*)(data + HEADER_OFFSET_CHUNK_INDEX));
-    response->header.status = data[HEADER_OFFSET_STATUS];
-    response->header.error_code = data[HEADER_OFFSET_ERROR_CODE];
+    header->message_type = data[HEADER_OFFSET_MESSAGE_TYPE];
+    header->command = data[HEADER_OFFSET_COMMAND];
+    header->payload_size = ntohl(*(uint32_t*)(data + HEADER_OFFSET_PAYLOAD_SIZE));
+    header->chunk_index = ntohl(*(uint32_t*)(data + HEADER_OFFSET_CHUNK_INDEX));
+    header->status = data[HEADER_OFFSET_STATUS];
+    header->error_code = data[HEADER_OFFSET_ERROR_CODE];
+    return STATUS_OK;
+}
+
+int parse_message(const uint8_t* data, uint32_t data_size, Response* response) {
+    Header header;
+    int status = extract_header(data, data_size, &header);
+    if (status != STATUS_OK) {
+        return status;
+    }
+    response->header = header;
     if (response->header.payload_size > 0) {
         if (data_size < (HEADER_SIZE + response->header.payload_size)) {
             return ERROR_INVALID_DATA_SIZE;

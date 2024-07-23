@@ -115,6 +115,12 @@ void destroy_response(Response* response);
  */
 int create_message(const Header* header, const uint8_t* payload, Message* message);
 
+
+/**
+ * @brief Extracts the Header struct from a raw byte array.
+ */
+int extract_header(const uint8_t* data, uint32_t data_size, Header* header);
+
 /**
  * @brief Parses a raw byte array into a Response struct containing the Header and payload.
  * 
