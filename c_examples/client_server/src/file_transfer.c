@@ -11,6 +11,28 @@
 
 #define SERVER_FILE_PATH "/code/c_examples/client_server/tests/fake_server_files"
 
+int _send_error_response(int socket, uint8_t command, uint8_t error_code) {
+    char error_message[256];
+    snprintf(error_message, sizeof(error_message), "Error code: %d", error_code);
+    Header header;
+    header.message_type = MESSAGE_ERROR;
+    header.command = command;
+    header.payload_size = strlen_null_term(error_message);
+    header.chunk_index = 0;
+    header.status = STATUS_ERROR;
+    header.error_code = error_code;
+
+    Message message;
+    int status = create_message(&header, (const uint8_t*)error_message, &message);
+    if (status != STATUS_OK) {
+        destroy_message(&message); // free memory in case of error (we aren't sure if any was allocated)
+        return status;
+    }
+    send(socket, message.data, message.size, 0);
+    destroy_message(&message);
+    return error_code;
+}
+
 int request_file_metadata(int socket, const char* file_name, Response* response) {
     uint32_t payload_size = strlen_null_term(file_name);
     Header header;
@@ -43,28 +65,6 @@ int request_file_metadata(int socket, const char* file_name, Response* response)
     }
     status = parse_message(buffer, bytes_received, response);
     return status;
-}
-
-int _send_error_response(int socket, uint8_t command, uint8_t error_code) {
-    char error_message[256];
-    snprintf(error_message, sizeof(error_message), "Error code: %d", error_code);
-    Header header;
-    header.message_type = MESSAGE_ERROR;
-    header.command = command;
-    header.payload_size = strlen_null_term(error_message);
-    header.chunk_index = 0;
-    header.status = STATUS_ERROR;
-    header.error_code = error_code;
-
-    Message message;
-    int status = create_message(&header, (const uint8_t*)error_message, &message);
-    if (status != STATUS_OK) {
-        destroy_message(&message); // free memory in case of error (we aren't sure if any was allocated)
-        return status;
-    }
-    send(socket, message.data, message.size, 0);
-    destroy_message(&message);
-    return error_code;
 }
 
 int send_file_metadata(int socket, const char* file_name) {
@@ -117,5 +117,13 @@ int send_file_contents(int socket, const char* file_name) {
 }
 
 int handle_request(int socket, const Header* header, const uint8_t* payload) {
-    return 0;
+    switch (header->command) {
+        case COMMAND_REQUEST_METADATA:
+            return send_file_metadata(socket, (const char*)payload);
+        case COMMAND_REQUEST_FILE:
+            return send_file_contents(socket, (const char*)payload);
+        default:
+            return _send_error_response(socket, header->command, ERROR_INVALID_COMMAND);
+    }
+    return ERROR_INVALID_COMMAND;
 }

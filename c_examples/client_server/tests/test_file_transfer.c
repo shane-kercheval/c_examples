@@ -32,7 +32,6 @@ void* server_worker(void* arg) {
             break;
         }
         pthread_mutex_unlock(&server_mutex);
-
         uint8_t buffer[MAX_MESSAGE_SIZE];
         ssize_t bytes_received = receive_or_die(client_socket, buffer, MAX_MESSAGE_SIZE);
         Response response;
@@ -42,8 +41,7 @@ void* server_worker(void* arg) {
             socket_cleanup(client_socket);
             continue;
         }
-        // TODO: handle any request via handle_request(client_socket, &response.header, response.payload);
-        send_file_metadata(client_socket, (const char*)response.payload);
+        handle_request(client_socket, &response.header, response.payload);
         socket_cleanup(client_socket);
         destroy_response(&response);
     }
@@ -72,7 +70,7 @@ void test__send_file_metadata__no_client_listening() {
     TEST_ASSERT_EQUAL_INT(ERROR_SEND_FAILED, status);
 }
 
-void test__request_file_metadata__success() {
+void test__request_file_metadata__send_file_metadata__success() {
     int server_socket = connect_with_retry_or_die(ADDRESS, PORT, 3, 1);
     const char* file_name = "test.txt";
     Response response;
@@ -112,7 +110,7 @@ int main(void) {
     RUN_TEST(test__request_file_metadata__no_server_listening);
     RUN_TEST(test__send_file_metadata__file_not_exists);
     RUN_TEST(test__send_file_metadata__no_client_listening);
-    RUN_TEST(test__request_file_metadata__success);
+    RUN_TEST(test__request_file_metadata__send_file_metadata__success);
     ////
     // stop the server
     ////

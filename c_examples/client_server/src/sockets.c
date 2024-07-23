@@ -13,7 +13,6 @@
 // https://www.youtube.com/watch?v=LtXEMwSG5-8 - Socket Programming Tutorial In C For Beginners | Part 1 | Eduonix
 // https://www.youtube.com/watch?v=mStnzIEprH8 - Socket Programming Tutorial In C For Beginners | Part 2 | Eduonix
 
-
 int connect_socket(const char* ip_address, in_addr_t port) {
     // AF_INET: IPv4; SOCK_STREAM: TCP; 0: default protocol
     int server_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -157,7 +156,6 @@ ssize_t receive_or_die(int socket_fd, void* buffer, size_t length) {
     }
     return bytes_received;
 }
-
 
 void socket_cleanup(int socket_fd) {
     if (socket_fd != -1) {
