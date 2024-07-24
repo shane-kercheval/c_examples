@@ -238,19 +238,12 @@ void test__request_file_contents__send_file_contents__multiple_chunks_success() 
         perror("fread");
         exit(1);
     }
-    fprintf(stderr, "expected_contents: `%s`\n", expected_contents);
-    fprintf(stderr, "expected file_size: %ld\n", file_size);
 
     int expected_chunks = calculate_total_chunks(file_size);
     int server_socket = connect_with_retry_or_die(ADDRESS, PORT, 3, 1);
     Response response;
     int status = request_file_contents(server_socket, file_name, &response);
     socket_cleanup(server_socket);
-
-    fprintf(stderr, "response.header.status: %u\n", response.header.payload_size);
-    fprintf(stderr, "response.header.error_code: %u\n", response.header.error_code);
-    fprintf(stderr, "response.header.chunk_index: %u\n", response.header.chunk_index);
-    fprintf(stderr, "response.header.payload_size: %u\n", response.header.payload_size);
 
     TEST_ASSERT_EQUAL_INT(STATUS_OK, status);
     TEST_ASSERT_EQUAL_UINT8(MESSAGE_RESPONSE, response.header.message_type);
@@ -262,6 +255,7 @@ void test__request_file_contents__send_file_contents__multiple_chunks_success() 
     // check that the payload is correctly parsed/returned in the response
     TEST_ASSERT_TRUE(memcmp(response.payload, expected_contents, file_size) == 0);
     destroy_response(&response);
+    free(expected_contents);
 }
 
 void test__calculate_total_chunks() {
