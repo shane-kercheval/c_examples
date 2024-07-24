@@ -85,10 +85,8 @@ void test__request_file_metadata__file_not_exist() {
     Response response;
     int status = request_file_metadata(server_socket, file_name, &response);
     socket_cleanup(server_socket);
-
-    fprintf(stderr, "response.header.status: %u\n", response.header.status);
-    fprintf(stderr, "response.header.error_code: %u\n", response.header.error_code);
-
+    // fprintf(stderr, "response.header.status: %u\n", response.header.status);
+    // fprintf(stderr, "response.header.error_code: %u\n", response.header.error_code);
     TEST_ASSERT_EQUAL_INT(ERROR_FILE_NOT_FOUND, status);
     TEST_ASSERT_EQUAL_UINT8(MESSAGE_RESPONSE, response.header.message_type);
     TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_METADATA, response.header.command);
@@ -104,10 +102,8 @@ void test__request_file_metadata__file_name_too_long() {
     Response response;
     int status = request_file_metadata(server_socket, file_name, &response);
     socket_cleanup(server_socket);
-
-    fprintf(stderr, "response.header.status: %u\n", response.header.status);
-    fprintf(stderr, "response.header.error_code: %u\n", response.header.error_code);
-
+    // fprintf(stderr, "response.header.status: %u\n", response.header.status);
+    // fprintf(stderr, "response.header.error_code: %u\n", response.header.error_code);
     TEST_ASSERT_EQUAL_INT(ERROR_FILE_OPEN_FAILED, status);
     TEST_ASSERT_EQUAL_UINT8(MESSAGE_RESPONSE, response.header.message_type);
     TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_METADATA, response.header.command);
@@ -166,10 +162,8 @@ void test__request_file_contents__file_not_exist() {
     Response response;
     int status = request_file_contents(server_socket, file_name, &response);
     socket_cleanup(server_socket);
-
-    fprintf(stderr, "response.header.status: %u\n", response.header.status);
-    fprintf(stderr, "response.header.error_code: %u\n", response.header.error_code);
-
+    // fprintf(stderr, "response.header.status: %u\n", response.header.status);
+    // fprintf(stderr, "response.header.error_code: %u\n", response.header.error_code);
     TEST_ASSERT_EQUAL_INT(ERROR_FILE_NOT_FOUND, status);
     TEST_ASSERT_EQUAL_UINT8(MESSAGE_RESPONSE, response.header.message_type);
     TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_FILE, response.header.command);
@@ -185,10 +179,8 @@ void test__request_file_contents__file_name_too_long() {
     Response response;
     int status = request_file_contents(server_socket, file_name, &response);
     socket_cleanup(server_socket);
-
-    fprintf(stderr, "response.header.status: %u\n", response.header.status);
-    fprintf(stderr, "response.header.error_code: %u\n", response.header.error_code);
-
+    // fprintf(stderr, "response.header.status: %u\n", response.header.status);
+    // fprintf(stderr, "response.header.error_code: %u\n", response.header.error_code);
     TEST_ASSERT_EQUAL_INT(ERROR_FILE_OPEN_FAILED, status);
     TEST_ASSERT_EQUAL_UINT8(MESSAGE_RESPONSE, response.header.message_type);
     TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_FILE, response.header.command);
