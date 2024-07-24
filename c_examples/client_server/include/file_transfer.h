@@ -60,4 +60,10 @@ int send_file_contents(int socket, const char* file_name);
  */
 int handle_request(int socket, const Header* header, const uint8_t* payload);
 
+
+/**
+ * @brief Calculate the total number of chunks required to send a file of a given size.
+ */
+int calculate_total_chunks(long file_size);
+
 #endif // FILE_TRANSFER_H

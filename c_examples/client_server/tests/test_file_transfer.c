@@ -99,6 +99,15 @@ void test__request_file_metadata__send_file_metadata__success() {
     destroy_response(&response);
 }
 
+void test__calculate_total_chunks() {
+    TEST_ASSERT_EQUAL_INT(1, calculate_total_chunks(1));
+    TEST_ASSERT_EQUAL_INT(1, calculate_total_chunks(MAX_PAYLOAD_SIZE - 1));
+    TEST_ASSERT_EQUAL_INT(1, calculate_total_chunks(MAX_PAYLOAD_SIZE));
+    TEST_ASSERT_EQUAL_INT(2, calculate_total_chunks(MAX_PAYLOAD_SIZE + 1));
+    TEST_ASSERT_EQUAL_INT(2, calculate_total_chunks(MAX_PAYLOAD_SIZE * 2));
+    TEST_ASSERT_EQUAL_INT(3, calculate_total_chunks((MAX_PAYLOAD_SIZE * 2) + 1));
+}
+
 void setUp(void) {}
 void tearDown(void) {}
 
@@ -120,6 +129,7 @@ int main(void) {
     RUN_TEST(test__send_file_metadata__file_name_too_long);
     RUN_TEST(test__send_file_metadata__no_client_listening);
     RUN_TEST(test__request_file_metadata__send_file_metadata__success);
+    RUN_TEST(test__calculate_total_chunks);
     ////
     // stop the server
     ////
