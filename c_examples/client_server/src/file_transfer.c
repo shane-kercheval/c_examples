@@ -3,6 +3,7 @@
 #include "file_transfer.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -162,9 +163,6 @@ int request_file_contents(int socket, const char* file_name, Response* response)
         if (status != STATUS_OK) {
             goto error;
         }
-        
-        // TODO: note that we aren't actually using/checking the chunk_index
-
         if (temp_header.message_type == MESSAGE_RESPONSE_CHUNK || temp_header.message_type == MESSAGE_RESPONSE_LAST_CHUNK) {
             // from man page:
             // void* realloc(void* ptr, size_t size);
@@ -187,7 +185,6 @@ int request_file_contents(int socket, const char* file_name, Response* response)
                 goto error;
             }
             response->payload = new_payload;
-
             // from man page:
             //  void *memcpy(void *restrict dst, const void *restrict src, size_t n);
             // The memcpy() function copies n bytes from memory area src to memory area dst.
@@ -201,7 +198,6 @@ int request_file_contents(int socket, const char* file_name, Response* response)
                 response->header = temp_header;
                 response->header.message_type = MESSAGE_RESPONSE;
                 response->header.payload_size = total_bytes_received;
-                response->header.chunk_index = 0; // TODO: NOT SURE IF THIS IS EVEN USED
                 response->header.status = STATUS_OK;
                 response->header.error_code = NOT_SET;
                 break;
@@ -269,13 +265,14 @@ int send_file_contents(int socket, const char* file_name) {
             return _send_error_response(socket, COMMAND_REQUEST_FILE, status, error_message);
         }
         ssize_t bytes_sent = send(socket, message.data, message.size, 0);
-        destroy_message(&message);
         if (bytes_sent != message.size) {
             fclose(file);
+            destroy_message(&message);
             char error_message[256];
             snprintf(error_message, sizeof(error_message), "Error sending chunk %d, bytes_sent: %ld", chunk_index, bytes_sent);
             return _send_error_response(socket, COMMAND_REQUEST_FILE, ERROR_SEND_FAILED, error_message);
         }
+        destroy_message(&message);
     }
     fclose(file);
     return STATUS_OK;
