@@ -192,32 +192,6 @@ void test__request_file_contents__file_name_too_long() {
 void test__request_file_contents__send_file_contents__success() {
     const char* file_name = "test.txt";
     const char* expected_contents = "These are the contents of test.txt\n";
-    // char full_path[256];
-    // snprintf(full_path, sizeof(full_path), "%s/%s", SERVER_FILE_PATH, file_name);
-    // FILE* file = fopen(full_path, "rb");
-    // if (file == NULL) {
-    //     perror("fopen");
-    //     exit(1);
-    // }
-    // // read in the contents of the file
-    // fseek(file, 0, SEEK_END);
-    // long file_size = ftell(file);
-    // fseek(file, 0, SEEK_SET);
-    // char* expected_contents = (char*)malloc(file_size + 1);
-    // if (expected_contents == NULL) {
-    //     perror("malloc");
-    //     exit(1);
-    // }
-    // size_t bytes_read = fread(expected_contents, 1, file_size, file);
-    // fclose(file);
-    // // fread does not null terminate the string
-    // expected_contents[file_size] = '\0';
-    // if (bytes_read != file_size) {
-    //     perror("fread");
-    //     exit(1);
-    // }
-    // fprintf(stderr, "expected_contents: `%s`\n", expected_contents);
-    // fprintf(stderr, "expected file_size: %ld\n", file_size);
     uint32_t expected_payload_size = strlen(expected_contents);
 
     int server_socket = connect_with_retry_or_die(ADDRESS, PORT, 3, 1);
