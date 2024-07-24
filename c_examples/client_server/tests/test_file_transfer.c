@@ -78,6 +78,44 @@ void test__send_file_metadata__no_client_listening() {
     TEST_ASSERT_EQUAL_INT(ERROR_SEND_FAILED, status);
 }
 
+void test__request_file_metadata__file_not_exist() {
+    const char* file_name = "this_file_does_not_exist.txt";
+
+    int server_socket = connect_with_retry_or_die(ADDRESS, PORT, 3, 1);
+    Response response;
+    int status = request_file_metadata(server_socket, file_name, &response);
+    socket_cleanup(server_socket);
+
+    fprintf(stderr, "response.header.status: %u\n", response.header.status);
+    fprintf(stderr, "response.header.error_code: %u\n", response.header.error_code);
+
+    TEST_ASSERT_EQUAL_INT(ERROR_FILE_NOT_FOUND, status);
+    TEST_ASSERT_EQUAL_UINT8(MESSAGE_RESPONSE, response.header.message_type);
+    TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_METADATA, response.header.command);
+    TEST_ASSERT_EQUAL_UINT8(STATUS_ERROR, response.header.status);
+    TEST_ASSERT_EQUAL_UINT8(ERROR_FILE_NOT_FOUND, response.header.error_code);
+    destroy_response(&response);
+}
+
+void test__request_file_metadata__file_name_too_long() {
+    char file_name[501]; memset(file_name, 'a', 500); file_name[500] = '\0';
+
+    int server_socket = connect_with_retry_or_die(ADDRESS, PORT, 3, 1);
+    Response response;
+    int status = request_file_metadata(server_socket, file_name, &response);
+    socket_cleanup(server_socket);
+
+    fprintf(stderr, "response.header.status: %u\n", response.header.status);
+    fprintf(stderr, "response.header.error_code: %u\n", response.header.error_code);
+
+    TEST_ASSERT_EQUAL_INT(ERROR_FILE_OPEN_FAILED, status);
+    TEST_ASSERT_EQUAL_UINT8(MESSAGE_RESPONSE, response.header.message_type);
+    TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_METADATA, response.header.command);
+    TEST_ASSERT_EQUAL_UINT8(STATUS_ERROR, response.header.status);
+    TEST_ASSERT_EQUAL_UINT8(ERROR_FILE_OPEN_FAILED, response.header.error_code);
+    destroy_response(&response);
+}
+
 void test__request_file_metadata__send_file_metadata__success() {
     const char* file_name = "test.txt";
     char* expected_metadata = "Size: 35";
@@ -236,6 +274,8 @@ int main(void) {
     RUN_TEST(test__send_file_metadata__file_not_exists);
     RUN_TEST(test__send_file_metadata__file_name_too_long);
     RUN_TEST(test__send_file_metadata__no_client_listening);
+    RUN_TEST(test__request_file_metadata__file_not_exist);
+    RUN_TEST(test__request_file_metadata__file_name_too_long);
     RUN_TEST(test__request_file_metadata__send_file_metadata__success);
     RUN_TEST(test__send_file_contents__file_not_exists);
     RUN_TEST(test__send_file_contents__file_name_too_long);

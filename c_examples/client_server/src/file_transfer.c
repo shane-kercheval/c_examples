@@ -68,6 +68,11 @@ int request_file_metadata(int socket, const char* file_name, Response* response)
         return ERROR_RECEIVE_FAILED;
     }
     status = parse_message(buffer, bytes_received, response);
+    // if status is not ok; just return that status;
+    // if status is ok but we received an error in the response/header , return the error code from the header
+    if (status == STATUS_OK && response->header.status == STATUS_ERROR) {
+        status = response->header.error_code;
+    }
     return status;
 }
 
