@@ -3,6 +3,8 @@
 
 #include "protocol.h"
 
+#define SERVER_FILE_PATH "/code/c_examples/client_server/tests/fake_server_files"
+
 /**
  * @brief Send a COMMAND_REQUEST_METADATA request to the server.
  * 

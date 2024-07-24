@@ -9,8 +9,6 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 
-#define SERVER_FILE_PATH "/code/c_examples/client_server/tests/fake_server_files"
-
 int _send_error_response(int socket, uint8_t command, uint8_t error_code, const char* error_message) {
     Header header;
     header.message_type = MESSAGE_RESPONSE;
@@ -203,7 +201,13 @@ int request_file_contents(int socket, const char* file_name, Response* response)
                 response->header.error_code = NOT_SET;
                 break;
             }
-        } else {
+        }
+        else if (temp_header.message_type == MESSAGE_RESPONSE && temp_header.status == STATUS_ERROR) {
+            response->header = temp_header;
+            status = response->header.error_code;
+            goto error;
+        }
+        else {
             status = ERROR_UNEXPECTED_MESSAGE_TYPE;
             goto error;
         }
