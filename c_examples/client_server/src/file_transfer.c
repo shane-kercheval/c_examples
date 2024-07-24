@@ -228,7 +228,7 @@ int send_file_contents(int socket, const char* file_name) {
     // rb is for reading in binary mode which is appropriate for transferring raw bytes
     FILE* file = fopen(full_path, "rb");
     if (file == NULL) {
-        char error_message[256];
+        char error_message[500];
         snprintf(error_message, sizeof(error_message), "Error opening file: %s", full_path);
         return _send_error_response(socket, COMMAND_REQUEST_FILE, ERROR_FILE_NOT_FOUND, error_message);
     }
@@ -238,7 +238,6 @@ int send_file_contents(int socket, const char* file_name) {
     fseek(file, 0, SEEK_SET);
 
     uint8_t buffer[MAX_PAYLOAD_SIZE];
-    uint32_t chunk_index = 0;
     // we need to do this instead of checking if bytes_read < MAX_PAYLOAD_SIZE because the last chunk might be exactly MAX_PAYLOAD_SIZE
     uint32_t total_chunks = calculate_total_chunks(file_size);
     for (uint32_t chunk_index = 0; chunk_index < total_chunks; chunk_index++) {
@@ -256,13 +255,17 @@ int send_file_contents(int socket, const char* file_name) {
         if (status != STATUS_OK) {
             destroy_message(&message);
             fclose(file);
-            return _send_error_response(socket, COMMAND_REQUEST_FILE, status);
+            char error_message[256];
+            snprintf(error_message, sizeof(error_message), "Error creating message (chunk %d), status: %d", chunk_index, status);
+            return _send_error_response(socket, COMMAND_REQUEST_FILE, status, error_message);
         }
         ssize_t bytes_sent = send(socket, message.data, message.size, 0);
         destroy_message(&message);
         if (bytes_sent != message.size) {
             fclose(file);
-            return _send_error_response(socket, COMMAND_REQUEST_FILE, ERROR_SEND_FAILED);
+            char error_message[256];
+            snprintf(error_message, sizeof(error_message), "Error sending chunk %d, bytes_sent: %ld", chunk_index, bytes_sent);
+            return _send_error_response(socket, COMMAND_REQUEST_FILE, ERROR_SEND_FAILED, error_message);
         }
     }
     fclose(file);
