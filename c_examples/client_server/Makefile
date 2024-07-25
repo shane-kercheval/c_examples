@@ -45,9 +45,11 @@ run_client_metadata_memory: compile
 	valgrind --leak-check=full --track-origins=yes $(BUILD_DIR)/src/$(CLIENT_EXEC) 0 test.txt
 
 run_client_metadata: compile
+	# ./build/src/client 0 test.txt
 	@$(BUILD_DIR)/src/$(CLIENT_EXEC) 0 test.txt || { echo 'Error running client'; exit 1; }
 
 run_client_contents: compile
+	# ./build/src/client 1 test.txt
 	@$(BUILD_DIR)/src/$(CLIENT_EXEC) 1 test_multiple_chunks.txt || { echo 'Error running client'; exit 1; }
 
 run_server: compile
