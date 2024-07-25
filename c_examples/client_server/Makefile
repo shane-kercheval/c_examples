@@ -39,8 +39,16 @@ tests_concurrency: compile
 clean:
 	rm -rf $(BUILD_DIR)
 
-run_client: compile
-	@$(BUILD_DIR)/src/$(CLIENT_EXEC) || { echo 'Error running client'; exit 1; }
+
+# run_client_metadata_memory: BUILD_TYPE := Release
+run_client_metadata_memory: compile
+	valgrind --leak-check=full --track-origins=yes $(BUILD_DIR)/src/$(CLIENT_EXEC) 0 test.txt
+
+run_client_metadata: compile
+	@$(BUILD_DIR)/src/$(CLIENT_EXEC) 0 test.txt || { echo 'Error running client'; exit 1; }
+
+run_client_contents: compile
+	@$(BUILD_DIR)/src/$(CLIENT_EXEC) 1 test_multiple_chunks.txt || { echo 'Error running client'; exit 1; }
 
 run_server: compile
 	@$(BUILD_DIR)/src/$(SERVER_EXEC) || { echo 'Error running server'; exit 1; }
