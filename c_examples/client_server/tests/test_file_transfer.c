@@ -90,8 +90,7 @@ void test__request_file_metadata__file_not_exist() {
     TEST_ASSERT_EQUAL_INT(ERROR_FILE_NOT_FOUND, status);
     TEST_ASSERT_EQUAL_UINT8(MESSAGE_RESPONSE, response.header.message_type);
     TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_METADATA, response.header.command);
-    TEST_ASSERT_EQUAL_UINT8(STATUS_ERROR, response.header.status);
-    TEST_ASSERT_EQUAL_UINT8(ERROR_FILE_NOT_FOUND, response.header.error_code);
+    TEST_ASSERT_EQUAL_UINT8(ERROR_FILE_NOT_FOUND, response.header.status);
     destroy_response(&response);
 }
 
@@ -107,8 +106,7 @@ void test__request_file_metadata__file_name_too_long() {
     TEST_ASSERT_EQUAL_INT(ERROR_FILE_OPEN_FAILED, status);
     TEST_ASSERT_EQUAL_UINT8(MESSAGE_RESPONSE, response.header.message_type);
     TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_METADATA, response.header.command);
-    TEST_ASSERT_EQUAL_UINT8(STATUS_ERROR, response.header.status);
-    TEST_ASSERT_EQUAL_UINT8(ERROR_FILE_OPEN_FAILED, response.header.error_code);
+    TEST_ASSERT_EQUAL_UINT8(ERROR_FILE_OPEN_FAILED, response.header.status);
     destroy_response(&response);
 }
 
@@ -128,7 +126,6 @@ void test__request_file_metadata__send_file_metadata__success() {
     TEST_ASSERT_EQUAL_UINT32(expected_payload_size, response.header.payload_size);
     TEST_ASSERT_EQUAL_UINT32(0, response.header.chunk_index);
     TEST_ASSERT_EQUAL_UINT8(STATUS_OK, response.header.status);
-    TEST_ASSERT_EQUAL_UINT8(NOT_SET, response.header.error_code);
     // check that the payload is correctly parsed/returned in the response
     TEST_ASSERT_TRUE(memcmp(response.payload, expected_metadata, expected_payload_size) == 0);
     destroy_response(&response);
@@ -167,8 +164,7 @@ void test__request_file_contents__file_not_exist() {
     TEST_ASSERT_EQUAL_INT(ERROR_FILE_NOT_FOUND, status);
     TEST_ASSERT_EQUAL_UINT8(MESSAGE_RESPONSE, response.header.message_type);
     TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_FILE, response.header.command);
-    TEST_ASSERT_EQUAL_UINT8(STATUS_ERROR, response.header.status);
-    TEST_ASSERT_EQUAL_UINT8(ERROR_FILE_NOT_FOUND, response.header.error_code);
+    TEST_ASSERT_EQUAL_UINT8(ERROR_FILE_NOT_FOUND, response.header.status);
     destroy_response(&response);
 }
 
@@ -184,8 +180,7 @@ void test__request_file_contents__file_name_too_long() {
     TEST_ASSERT_EQUAL_INT(ERROR_FILE_OPEN_FAILED, status);
     TEST_ASSERT_EQUAL_UINT8(MESSAGE_RESPONSE, response.header.message_type);
     TEST_ASSERT_EQUAL_UINT8(COMMAND_REQUEST_FILE, response.header.command);
-    TEST_ASSERT_EQUAL_UINT8(STATUS_ERROR, response.header.status);
-    TEST_ASSERT_EQUAL_UINT8(ERROR_FILE_OPEN_FAILED, response.header.error_code);
+    TEST_ASSERT_EQUAL_UINT8(ERROR_FILE_OPEN_FAILED, response.header.status);
     destroy_response(&response);
 }
 
@@ -205,7 +200,6 @@ void test__request_file_contents__send_file_contents__success() {
     TEST_ASSERT_EQUAL_UINT32(expected_payload_size, response.header.payload_size);
     TEST_ASSERT_EQUAL_UINT32(1, response.header.chunk_index + 1);
     TEST_ASSERT_EQUAL_UINT8(STATUS_OK, response.header.status);
-    TEST_ASSERT_EQUAL_UINT8(NOT_SET, response.header.error_code);
     // check that the payload is correctly parsed/returned in the response
     TEST_ASSERT_TRUE(memcmp(response.payload, expected_contents, expected_payload_size) == 0);
     destroy_response(&response);
@@ -251,7 +245,6 @@ void test__request_file_contents__send_file_contents__multiple_chunks_success() 
     TEST_ASSERT_EQUAL_UINT32(file_size, response.header.payload_size);
     TEST_ASSERT_EQUAL_UINT32(expected_chunks, response.header.chunk_index + 1);
     TEST_ASSERT_EQUAL_UINT8(STATUS_OK, response.header.status);
-    TEST_ASSERT_EQUAL_UINT8(NOT_SET, response.header.error_code);
     // check that the payload is correctly parsed/returned in the response
     TEST_ASSERT_TRUE(memcmp(response.payload, expected_contents, file_size) == 0);
     destroy_response(&response);

@@ -16,14 +16,13 @@ int _send_error_response(int socket, uint8_t command, uint8_t error_code, const 
     header.command = command;
     header.payload_size = strlen_null_term(error_message);
     header.chunk_index = 0;
-    header.status = STATUS_ERROR;
-    header.error_code = error_code;
+    header.status = error_code;
 
     Message message;
-    int status = create_message(&header, (const uint8_t*)error_message, &message);
-    if (status != STATUS_OK) {
+    int rvalue = create_message(&header, (const uint8_t*)error_message, &message);
+    if (rvalue != STATUS_OK) {
         destroy_message(&message); // free memory in case of error (we aren't sure if any was allocated)
-        return status;
+        return rvalue;
     }
     send(socket, message.data, message.size, 0);
     destroy_message(&message);
@@ -38,13 +37,12 @@ int _send_request(int socket, uint8_t command, const char* file_name) {
     header.payload_size = payload_size;
     header.chunk_index = 0;
     header.status = NOT_SET;
-    header.error_code = NOT_SET;
 
     // convert string (filename) to raw bytes
     Message message;
-    int status = create_message(&header, (const uint8_t*)file_name, &message);
-    if (status != STATUS_OK) {
-        return status;
+    int rvalue = create_message(&header, (const uint8_t*)file_name, &message);
+    if (rvalue != STATUS_OK) {
+        return rvalue;
     }
     // send the message (byte array) to the server
     // Man page: "Upon successful completion, the number of bytes which were sent is returned. 
@@ -58,9 +56,9 @@ int _send_request(int socket, uint8_t command, const char* file_name) {
 }
 
 int request_file_metadata(int socket, const char* file_name, Response* response) {
-    int status = _send_request(socket, COMMAND_REQUEST_METADATA, file_name);
-    if (status != STATUS_OK) {
-        return status;
+    int rvalue = _send_request(socket, COMMAND_REQUEST_METADATA, file_name);
+    if (rvalue != STATUS_OK) {
+        return rvalue;
     }
     // receive the data from the server
     uint8_t buffer[MAX_MESSAGE_SIZE];
@@ -68,13 +66,13 @@ int request_file_metadata(int socket, const char* file_name, Response* response)
     if (bytes_received <= 0) {
         return ERROR_RECEIVE_FAILED;
     }
-    status = parse_message(buffer, bytes_received, response);
-    // if status is not ok; just return that status;
-    // if status is ok but we received an error in the response/header , return the error code from the header
-    if (status == STATUS_OK && response->header.status == STATUS_ERROR) {
-        status = response->header.error_code;
+    rvalue = parse_message(buffer, bytes_received, response);
+    // if rvalue is not ok; just return that value;
+    // if rvalue is ok but we received an error in the response/header , return the error code from the header
+    if (rvalue == STATUS_OK && response->header.status != STATUS_OK) {
+        rvalue = response->header.status;
     }
-    return status;
+    return rvalue;
 }
 
 int send_file_metadata(int socket, const char* file_name) {
@@ -86,10 +84,10 @@ int send_file_metadata(int socket, const char* file_name) {
     // the output string (the size'th character then gets the terminating ‘\0’)
     // if the return value is greater than or equal to the size argument, the string was too short
     // and some of the printed characters were discarded. 
-    int status = snprintf(full_path, sizeof(full_path), "%s/%s", SERVER_FILE_PATH, file_name);
-    if (status < 0 || status >= sizeof(full_path)) {
+    int rvalue = snprintf(full_path, sizeof(full_path), "%s/%s", SERVER_FILE_PATH, file_name);
+    if (rvalue < 0 || rvalue >= sizeof(full_path)) {
         char error_message[256];
-        snprintf(error_message, sizeof(error_message), "Error creating full path; status: %d", status);
+        snprintf(error_message, sizeof(error_message), "Error creating full path; status: %d", rvalue);
         _send_error_response(socket, COMMAND_REQUEST_METADATA, ERROR_FILE_OPEN_FAILED, error_message);
         return ERROR_FILE_OPEN_FAILED;
     }
@@ -104,16 +102,15 @@ int send_file_metadata(int socket, const char* file_name) {
     char metadata[256];
     // let's just return the size of the file for now
     snprintf(metadata, sizeof(metadata), "Size: %ld", file_stat.st_size);
-    // Header header = {MESSAGE_RESPONSE, COMMAND_REQUEST_METADATA, strlen_null_term(metadata), 0};
-    Header header = {MESSAGE_RESPONSE, COMMAND_REQUEST_METADATA, strlen_null_term(metadata), 0, STATUS_OK, NOT_SET};
+    Header header = {MESSAGE_RESPONSE, COMMAND_REQUEST_METADATA, strlen_null_term(metadata), 0, STATUS_OK};
     Message message;
-    status = create_message(&header, (const uint8_t*)metadata, &message);
-    if (status != STATUS_OK) {
+    rvalue = create_message(&header, (const uint8_t*)metadata, &message);
+    if (rvalue != STATUS_OK) {
         destroy_message(&message); // free memory in case of error (we aren't sure if any was allocated)
         char error_message[256];
-        snprintf(error_message, sizeof(error_message), "Error creating message; status: %d", status);
-        _send_error_response(socket, COMMAND_REQUEST_METADATA, status, error_message);
-        return status;
+        snprintf(error_message, sizeof(error_message), "Error creating message; status: %d", rvalue);
+        _send_error_response(socket, COMMAND_REQUEST_METADATA, rvalue, error_message);
+        return rvalue;
     }
     ssize_t bytes_sent = send(socket, message.data, message.size, 0);
     destroy_message(&message);
@@ -133,12 +130,11 @@ int request_file_contents(int socket, const char* file_name, Response* response)
     header.payload_size = payload_size;
     header.chunk_index = 0;
     header.status = NOT_SET;
-    header.error_code = NOT_SET;
 
     Message message;
-    int status = create_message(&header, (const uint8_t*)file_name, &message);
-    if (status != STATUS_OK) {
-        return status;
+    int rvalue = create_message(&header, (const uint8_t*)file_name, &message);
+    if (rvalue != STATUS_OK) {
+        return rvalue;
     }
 
     ssize_t bytes_sent = send(socket, message.data, message.size, 0);
@@ -154,13 +150,13 @@ int request_file_contents(int socket, const char* file_name, Response* response)
     while (1) {
         ssize_t bytes_received = recv(socket, buffer, MAX_MESSAGE_SIZE, 0);
         if (bytes_received <= 0) {
-            status = ERROR_RECEIVE_FAILED;
+            rvalue = ERROR_RECEIVE_FAILED;
             goto error;
         }
 
         Header temp_header;
-        status = extract_header(buffer, bytes_received, &temp_header);
-        if (status != STATUS_OK) {
+        rvalue = extract_header(buffer, bytes_received, &temp_header);
+        if (rvalue != STATUS_OK) {
             goto error;
         }
         if (temp_header.message_type == MESSAGE_RESPONSE_CHUNK || temp_header.message_type == MESSAGE_RESPONSE_LAST_CHUNK) {
@@ -181,7 +177,7 @@ int request_file_contents(int socket, const char* file_name, Response* response)
             // TLDR; we are using realloc to continually grow the payload buffer as we receive more data
             uint8_t* new_payload = realloc(response->payload, total_bytes_received + temp_header.payload_size);
             if (new_payload == NULL) {
-                status = ERROR_MEMORY_ALLOCATION_FAILED;
+                rvalue = ERROR_MEMORY_ALLOCATION_FAILED;
                 goto error;
             }
             response->payload = new_payload;
@@ -199,17 +195,16 @@ int request_file_contents(int socket, const char* file_name, Response* response)
                 response->header.message_type = MESSAGE_RESPONSE;
                 response->header.payload_size = total_bytes_received;
                 response->header.status = STATUS_OK;
-                response->header.error_code = NOT_SET;
                 break;
             }
         }
-        else if (temp_header.message_type == MESSAGE_RESPONSE && temp_header.status == STATUS_ERROR) {
+        else if (temp_header.message_type == MESSAGE_RESPONSE && temp_header.status != STATUS_OK) {
             response->header = temp_header;
-            status = response->header.error_code;
+            rvalue = response->header.status;
             goto error;
         }
         else {
-            status = ERROR_UNEXPECTED_MESSAGE_TYPE;
+            rvalue = ERROR_UNEXPECTED_MESSAGE_TYPE;
             goto error;
         }
     }
@@ -218,15 +213,15 @@ int request_file_contents(int socket, const char* file_name, Response* response)
 error:
     free(response->payload);
     response->payload = NULL;
-    return status;
+    return rvalue;
 }
 
 int send_file_contents(int socket, const char* file_name) {
     char full_path[256];
-    int status = snprintf(full_path, sizeof(full_path), "%s/%s", SERVER_FILE_PATH, file_name);
-    if (status < 0 || status >= sizeof(full_path)) {
+    int rvalue = snprintf(full_path, sizeof(full_path), "%s/%s", SERVER_FILE_PATH, file_name);
+    if (rvalue < 0 || rvalue >= sizeof(full_path)) {
         char error_message[256];
-        snprintf(error_message, sizeof(error_message), "Error creating full path; status: %d", status);
+        snprintf(error_message, sizeof(error_message), "Error creating full path; status: %d", rvalue);
         _send_error_response(socket, COMMAND_REQUEST_FILE, ERROR_FILE_OPEN_FAILED, error_message);
         return ERROR_FILE_OPEN_FAILED;
     }
@@ -253,16 +248,15 @@ int send_file_contents(int socket, const char* file_name) {
         header.payload_size = bytes_read;
         header.chunk_index = chunk_index;
         header.status = STATUS_OK;
-        header.error_code = NOT_SET;
 
         Message message;
-        status = create_message(&header, buffer, &message);
-        if (status != STATUS_OK) {
+        rvalue = create_message(&header, buffer, &message);
+        if (rvalue != STATUS_OK) {
             destroy_message(&message);
             fclose(file);
             char error_message[256];
-            snprintf(error_message, sizeof(error_message), "Error creating message (chunk %d), status: %d", chunk_index, status);
-            return _send_error_response(socket, COMMAND_REQUEST_FILE, status, error_message);
+            snprintf(error_message, sizeof(error_message), "Error creating message (chunk %d), status: %d", chunk_index, rvalue);
+            return _send_error_response(socket, COMMAND_REQUEST_FILE, rvalue, error_message);
         }
         ssize_t bytes_sent = send(socket, message.data, message.size, 0);
         if (bytes_sent != message.size) {

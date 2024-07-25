@@ -17,8 +17,6 @@
 #define COMMAND_REQUEST_METADATA 2
 
 #define STATUS_OK 0
-#define STATUS_ERROR 1
-
 #define ERROR_UNKNOWN_COMMAND 1
 #define ERROR_FILE_NOT_FOUND 2
 #define ERROR_MAX_PAYLOAD_SIZE_EXCEEDED 3
@@ -36,7 +34,6 @@
 #define HEADER_OFFSET_PAYLOAD_SIZE 2
 #define HEADER_OFFSET_CHUNK_INDEX 6
 #define HEADER_OFFSET_STATUS 10
-#define HEADER_OFFSET_ERROR_CODE 11
 
 #define MAX_PAYLOAD_SIZE 1024
 
@@ -48,7 +45,6 @@
  * payload_size: size of the payload data in bytes
  * chunk_index: index of the chunk (for chunked messages)
  * status: status of the response (not used for requests)
- * error_code: error code if status is ERROR (not used for requests)
  */
 #pragma pack(push, 1) // this ensures that the struct is packed with 1 byte alignment (i.e. without padding); this is needed so offset calculations are correct when converting creating the byte array message
 typedef struct {
@@ -61,13 +57,12 @@ typedef struct {
     uint32_t payload_size;
     uint32_t chunk_index;
     uint8_t status;
-    uint8_t error_code;
 } Header;
 #pragma pack(pop)
 
 #define HEADER_SIZE sizeof(Header)
 #define MAX_MESSAGE_SIZE (HEADER_SIZE + MAX_PAYLOAD_SIZE)
-#define HEADER_INIT {NOT_SET, NOT_SET, 0, 0, NOT_SET, NOT_SET}
+#define HEADER_INIT {NOT_SET, NOT_SET, 0, 0, NOT_SET}
 
 /**
  * @brief holds the header and payload (data) that will be sent over the network.

@@ -28,9 +28,8 @@ int create_message(const Header* header, const uint8_t* payload, Message* messag
     // next four bytes is the chunk index
     *(uint32_t*)(message->data + HEADER_OFFSET_CHUNK_INDEX) = htonl(header->chunk_index);
     message->data[HEADER_OFFSET_STATUS] = header->status;
-    message->data[HEADER_OFFSET_ERROR_CODE] = header->error_code;
-    // we have used 12 bytes so far, so we copy the payload after that
     if (header->payload_size > 0 && payload != NULL) {
+        // copy the payload into the message starting after the header
         memcpy(message->data + HEADER_SIZE, payload, header->payload_size);
     }
     return STATUS_OK;
@@ -45,7 +44,6 @@ int extract_header(const uint8_t* data, uint32_t data_size, Header* header) {
     header->payload_size = ntohl(*(uint32_t*)(data + HEADER_OFFSET_PAYLOAD_SIZE));
     header->chunk_index = ntohl(*(uint32_t*)(data + HEADER_OFFSET_CHUNK_INDEX));
     header->status = data[HEADER_OFFSET_STATUS];
-    header->error_code = data[HEADER_OFFSET_ERROR_CODE];
     return STATUS_OK;
 }
 
