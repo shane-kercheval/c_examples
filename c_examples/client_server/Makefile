@@ -50,6 +50,7 @@ run_client_metadata: compile
 
 run_client_contents: compile
 	# ./build/src/client 1 test.txt
+	# ./build/src/client 1 test_multiple_chunks.txt
 	@$(BUILD_DIR)/src/$(CLIENT_EXEC) 1 test_multiple_chunks.txt || { echo 'Error running client'; exit 1; }
 
 run_server: compile
