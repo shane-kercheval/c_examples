@@ -54,7 +54,6 @@ void* producer(void* arg) {
         sprintf(request.data, "%d", buffer->total_puts);
         put_success = put(buffer, request);
         assert(put_success);  // buffer should not be full
-        buffer->total_puts++;
         // Signal the not_empty condition to wake up any waiting consumers.
         COND_SIGNAL(not_empty);
         MUTEX_UNLOCK(mutex);
