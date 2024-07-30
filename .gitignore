@@ -61,3 +61,4 @@ c++_examples/output_cpp
 /c_examples/client_server/build
 c_examples/client_server/src/temp.c
 c_examples/client_server/src/temp2.c
+.DS_Store
